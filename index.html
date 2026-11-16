@@ -166,8 +166,15 @@ img{display:block}
 .todos.dim{opacity:.4;pointer-events:none}
 
 /* 카톡 공유 */
-.share{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:40px;margin-top:12px;border-radius:999px;
-  background:#fee500;color:#191919;font-size:14px;font-weight:600}
+.share{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 11px;border-radius:999px;
+  background:#fee500;color:#191919;font-size:12px;font-weight:600;white-space:nowrap}
+.share.mt{margin-top:12px}
+.card-h h2 small{font-size:13px;font-weight:500;color:var(--dim);margin-left:6px}
+.st{display:flex;gap:10px;margin-top:3px;font-size:12px;color:var(--dim);font-weight:400}
+.st b{font-weight:600;color:var(--ok)}
+.st .ps{color:#5b63c9;font-weight:600}
+.pokeshare{display:flex;justify-content:flex-end;padding:0 0 10px}
+.hint{font-size:12px;color:var(--dim);margin:10px 2px 0}
 
 /* 영상 */
 .player{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#111}
@@ -258,7 +265,7 @@ var WD_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturd
 var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 var TASKS = [
   {key:'speak', ic:'speak', title:'Speak 레슨', sub:'스픽 앱 오늘 분량'},
-  {key:'video', ic:'tv',    title:'자막 없이 영상 보기', sub:'오늘의 영상 5분'}
+  {key:'video', ic:'tv',    title:'자막 없이 영상 보기', sub:'5분 영상 · 주 3편'}
 ];
 
 /* ── 저장소: Supabase 또는 localStorage ── */
@@ -438,6 +445,10 @@ function logout(){
 
 /* ── 렌더 ── */
 async function refresh(){
+  if(S.today && S.today !== today()){
+    var n = new Date(); S.sel = today(); S.view = {y:n.getFullYear(), m:n.getMonth()}; S.editVideo = false;
+  }
+  S.today = today();
   try{ await loadAll(); }catch(e){ toast('불러오기 실패 — 새로고침 해 주세요'); }
   render();
 }
@@ -484,7 +495,7 @@ function renderCal(){
 }
 function renderDay(){
   var s = S.sel, isToday = s === today(), c = chk(s, S.me.phone4), on = active(s);
-  $('todo').innerHTML = '<div class="card-h"><h2>'+(isToday ? "Today's Todos" : label(s))+'</h2>'
+  $('todo').innerHTML = '<div class="card-h"><h2>'+(isToday ? "My Todos" : label(s))+'<small>'+esc(S.me.name)+'</small></h2>'
     + (isToday || !on ? '<span class="link">'+label(s)+'</span>' : '<button class="link" id="go-today">오늘로 ›</button>')+'</div>'
     + (on ? '' : '<div class="note" style="margin-bottom:10px">'+START.slice(5).replace('-', '월 ').replace(/^0/, '')+'일부터 시작해요</div>')
     + (c.pass ? '<div class="passon">🎫 '+(isToday ? '오늘은' : '이 날은')+' 패스권을 썼어요<small>완료로 쳐 줘요 · 셋 다 연속도 안 끊겨요</small></div>' : '')
@@ -492,24 +503,28 @@ function renderDay(){
       return '<button class="todo'+(c[t.key] ? ' done' : '')+'" data-t="'+t.key+'"'+(on ? '' : ' disabled')+'>'
         + '<span class="ic">'+emo(t.ic, '')+'</span><span class="tx"><b>'+t.title+'</b><small>'+t.sub+'</small></span>'
         + '<span class="box">'+CHECK_SVG+'</span></button>';
-    }).join('') + '</div>' + passHtml(s, c, on);
+    }).join('') + '</div>' + passHtml(s, c, on)
+    + (on && !c.speak && !c.video && !c.pass ? '<p class="hint">끝낸 걸 눌러서 체크해요</p>' : '');
 
   var cnt = S.members.filter(function(mm){ return personDone(s, mm.phone4); }).length;
-  $('crew').innerHTML = '<div class="card-h"><h2>Crew</h2><span class="link">'+cnt+' / '+S.members.length+' 완료</span></div>'
-    + S.members.map(function(mm){
-      var cc = chk(s, mm.phone4), k = (cc.speak ? 1 : 0) + (cc.video ? 1 : 0), mine = mm.phone4 === S.me.phone4;
-      var st = cc.pass ? '패스 🎫' : (k === 2 ? '오늘 끝!' : k + ' / 2');
+  var others = S.members.filter(function(mm){ return mm.phone4 !== S.me.phone4; });
+  $('crew').innerHTML = '<div class="card-h"><h2>Crew<small>'+cnt+' / '+S.members.length+' 완료</small></h2>'
+    + (on ? '<button class="share" id="share-status">💬 현황 공유</button>' : '')+'</div>'
+    + others.map(function(mm){
+      var cc = chk(s, mm.phone4);
       var g = gotCount(s, mm.phone4, 'cheer'), pk = gotCount(s, mm.phone4, 'poke');
       var got = (g ? '<span class="got">👏'+g+'</span>' : '') + (pk && !personDone(s, mm.phone4) ? '<span class="got">👉'+pk+'</span>' : '');
+      var st = cc.pass ? '<span class="ps">🎫 패스</span>'
+        : personDone(s, mm.phone4) ? '<b>✓ 다 했어요</b>'
+        : '<span>'+(cc.speak ? '✓' : '·')+' 스픽</span><span>'+(cc.video ? '✓' : '·')+' 영상</span>';
+      var pokeShare = s === today() && !personDone(s, mm.phone4) && sentCheer(s, S.me.phone4, mm.phone4, 'poke');
       return '<div class="crew-row">'+av(mm)
-        + '<div class="nm">'+esc(mm.name)+got+'<small>'+(mine ? '나 · ' : '')+st+'</small></div>'
-        + (cc.pass ? '<div class="mini"><span class="pass">Pass</span></div>'
-                   : '<div class="mini"><span class="'+(cc.speak ? 'on' : '')+'">Speak</span><span class="'+(cc.video ? 'on' : '')+'">Video</span></div>')
-        + (mine ? '' : cheerBtn(s, mm))
-        + '</div>';
+        + '<div class="nm">'+esc(mm.name)+got+'<div class="st">'+st+'</div></div>'
+        + cheerBtn(s, mm)
+        + '</div>'
+        + (pokeShare ? '<div class="pokeshare"><button class="share" data-pokeshare="'+mm.phone4+'">💬 카톡으로도 보낼까요?</button></div>' : '');
     }).join('')
-    + (allDone(s) ? '<div class="allclear">'+emo('party', '')+'다 같이 해냈어요!</div>' : '')
-    + (on ? '<button class="share" id="share-status">💬 카톡에 현황 공유</button>' : '');
+    + (allDone(s) ? '<div class="allclear">'+emo('party', '')+'다 같이 해냈어요!</div>' : '');
 }
 function passHtml(s, c, on){
   if(!on) return '';
@@ -551,8 +566,8 @@ function renderVideo(){
   if(key === S.vkey && el.innerHTML) return;   // 같은 영상이면 플레이어 유지(보는 중 끊기지 않게)
   S.vkey = key;
   if(YTP){ try{ YTP.destroy(); }catch(e){} YTP = null; }
-  var head = '<div class="card-h"><h2>'+(s === today() ? "Today's Video" : label(s)+' 영상')+'</h2>'
-    + (v && !S.editVideo ? '<button class="link" id="v-change">바꾸기</button>' : '<span class="link">자막 없이</span>')+'</div>';
+  var head = '<div class="card-h"><h2>'+(s === today() ? "Video" : label(s)+' 영상')+'</h2>'
+    + (v && !S.editVideo ? '<button class="link" id="v-change">바꾸기</button>' : '<span class="link">자막 없이 · 주 3편</span>')+'</div>';
   if(v && !S.editVideo){
     var who = S.members.find(function(x){ return x.phone4 === v.by_phone4; });
     var id = ytId(v.url);
@@ -561,7 +576,7 @@ function renderVideo(){
             : '<a class="btn line" href="'+esc(v.url)+'" target="_blank" rel="noopener">영상 열기 ↗</a>')
       + (v.title ? '<div class="vtitle">'+esc(v.title)+'</div>' : '')
       + '<div class="vmeta">'+(who ? esc(who.name)+' 픽 · ' : '')+'자막은 꺼진 채로 시작해요</div>'
-      + '<button class="share" id="share-video">💬 카톡에 영상 공유</button>';
+      + '<button class="share mt" id="share-video">💬 영상 공유</button>';
     if(id) withYT(function(){
       if(S.sel !== s || !document.getElementById('ytp')) return;
       YTP = new YT.Player('ytp', {
@@ -628,7 +643,7 @@ async function cheer(to, kind){
   var c = {day:today(), from_phone4:S.me.phone4, to_phone4:to, kind:kind, created_at:new Date().toISOString()};
   var m = S.members.find(function(x){ return x.phone4 === to; });
   S.cheers.push(c); renderDay();
-  try{ await DB.sendCheer(c); toast(m.name+(kind === 'poke' ? '에게 콕 👉 보냈어요' : '에게 박수 👏 보냈어요')); }
+  try{ await DB.sendCheer(c); toast(m.name+(kind === 'poke' ? '에게 콕 👉 · 카톡으로도 보낼 수 있어요' : '에게 박수 👏 보냈어요')); }
   catch(e){ S.cheers.splice(S.cheers.indexOf(c), 1); renderDay(); toast('못 보냈어요. 다시 눌러 주세요'); }
 }
 function inboxOk(){
@@ -662,14 +677,20 @@ function statusText(){
     lines.push(m.ch+' '+m.name+'  '+(c.pass ? '🎫 패스' : (c.speak ? '✅' : '⬜')+'스픽 '+(c.video ? '✅' : '⬜')+'영상'));
   });
   if(allDone(s)) lines.push('🎉 셋 다 해냈어요!');
-  if(v) lines.push('', '📺 '+(v.title || '오늘의 영상'));
+  if(v) lines.push('', '📺 '+(v.title || '이번 영상'));
   lines.push('', '👉 '+SITE);
   return lines.join('\n');
+}
+function pokeText(to){
+  var me = S.me, m = S.members.find(function(x){ return x.phone4 === to; }), c = chk(today(), to), left = [];
+  if(!c.speak) left.push('스픽'); if(!c.video) left.push('영상');
+  return [me.ch+' '+me.name+'가 '+m.ch+' '+m.name+'를 콕 👉', left.length ? '아직 '+left.join(', ')+' 남았어요!' : '', '', '👉 '+SITE]
+    .filter(function(x, i){ return i !== 1 || x; }).join('\n');
 }
 function videoText(){
   var s = S.sel, v = S.videos[s]; if(!v) return '';
   var who = S.members.find(function(x){ return x.phone4 === v.by_phone4; });
-  return ['[미지의 영어] '+(s === today() ? '오늘의 영상' : label(s)+' 영상')+' 🎬'+(who ? ' ('+who.name+' 픽)' : ''),
+  return ['[미지의 영어] '+(s === today() ? '이번 영상' : label(s)+' 영상')+' 🎬'+(who ? ' ('+who.name+' 픽)' : ''),
           v.title || '', v.url, '', '자막 없이 보고 체크하기 👉 '+SITE].filter(function(x, i){ return i !== 1 || x; }).join('\n');
 }
 
@@ -689,6 +710,7 @@ document.addEventListener('click', function(e){
   if(t.dataset.t){ toggle(t.dataset.t); return; }
   if(t.dataset.who){ pick(t.dataset.who); return; }
   if(t.dataset.cheer){ cheer(t.dataset.cheer, t.dataset.kind); return; }
+  if(t.dataset.pokeshare){ shareOut(pokeText(t.dataset.pokeshare)); return; }
   switch(t.id){
     case 'prev': S.view.m--; if(S.view.m < 0){ S.view.m = 11; S.view.y--; } refresh(); break;
     case 'next': S.view.m++; if(S.view.m > 11){ S.view.m = 0; S.view.y++; } refresh(); break;
