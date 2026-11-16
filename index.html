@@ -25,16 +25,12 @@ input{font:inherit;color:inherit}
 .login{min-height:90vh;display:flex;flex-direction:column;justify-content:center;gap:18px;text-align:center}
 .login h1{font-size:26px;margin:0}
 .login p{color:var(--dim);margin:0;line-height:1.6}
-.pin{display:flex;justify-content:center;gap:10px}
-.pin input{width:56px;height:64px;text-align:center;font-size:28px;border:2px solid var(--line);
-  border-radius:16px;background:var(--card);outline:none}
-.pin input:focus{border-color:var(--accent)}
-.field{width:100%;padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card);
-  font-size:17px;outline:none}
-.field:focus{border-color:var(--accent)}
-.swatches{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-.sw{width:40px;height:40px;border-radius:50%;border:3px solid transparent}
-.sw.on{border-color:var(--ink)}
+.who{display:flex;flex-direction:column;gap:12px}
+.who button{display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(--card);
+  border-radius:18px;box-shadow:var(--shadow);text-align:left;font-size:19px;font-weight:700}
+.who button:active{transform:scale(.98)}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:18px;font-weight:700;flex:none}
 .btn{display:inline-block;padding:14px 18px;border-radius:14px;background:var(--accent);color:#fff;
   font-size:17px;font-weight:700;box-shadow:var(--shadow)}
 .btn:disabled{opacity:.4}
@@ -112,30 +108,12 @@ input{font:inherit;color:inherit}
 <body>
 <div class="wrap">
 
-  <!-- 로그인 -->
+  <!-- 캐릭터 고르기 -->
   <section id="v-login" class="login hidden">
-    <div style="font-size:48px">🗣️📺</div>
     <h1>영어 같이 하기</h1>
-    <p>스픽 하고, 자막 없이 영상 하나.<br>휴대폰 뒷번호 4자리로 들어와요.</p>
-    <div class="pin" id="pin">
-      <input inputmode="numeric" maxlength="1" aria-label="첫째 자리">
-      <input inputmode="numeric" maxlength="1" aria-label="둘째 자리">
-      <input inputmode="numeric" maxlength="1" aria-label="셋째 자리">
-      <input inputmode="numeric" maxlength="1" aria-label="넷째 자리">
-    </div>
+    <p>스픽 하고, 자막 없이 영상 하나.<br>누구로 들어갈까요?</p>
+    <div class="who" id="who"></div>
     <div class="err" id="login-err"></div>
-  </section>
-
-  <!-- 처음 온 사람 -->
-  <section id="v-join" class="login hidden">
-    <div style="font-size:44px">👋</div>
-    <h1>처음이네요</h1>
-    <p>이름이랑 내 색깔만 골라 주세요.<br>달력에 이 색으로 칠해져요.</p>
-    <input class="field" id="join-name" maxlength="20" placeholder="이름 (예: 미지)">
-    <div class="swatches" id="join-colors"></div>
-    <button class="btn" id="join-go">시작하기</button>
-    <button class="btn ghost" id="join-back">뒤로</button>
-    <div class="err" id="join-err"></div>
   </section>
 
   <!-- 메인 -->
@@ -160,7 +138,7 @@ input{font:inherit;color:inherit}
     <div class="sec" id="day-sec"></div>
     <div class="sec" id="video-sec"></div>
 
-    <div class="foot"><button id="logout">다른 번호로 들어가기</button></div>
+    <div class="foot"><button id="logout">다른 사람으로 들어가기</button></div>
   </section>
 </div>
 <div class="burst" id="burst"></div>
@@ -175,7 +153,12 @@ var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var sb = null;
 try{ if(SB_URL && SB_KEY && window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); }catch(e){ sb = null; }
 
-var COLORS = ['#ff8fa3','#ffb36b','#f2cf4a','#6fcf97','#6cb8f0','#a98ef0'];
+/* 우리 셋. id 는 DB eng_member.phone4 칸에 들어가는 고정값(4자리 형식 유지) */
+var PEOPLE = [
+  {phone4:'0001', name:'Simon', color:'#6c9ef0'},
+  {phone4:'0002', name:'MiMi',  color:'#ff8fa3'},
+  {phone4:'0003', name:'Jamie', color:'#f5b94a'}
+];
 var WD = ['일','월','화','수','목','금','토'];
 
 /* ── 저장소: Supabase 또는 localStorage ── */
@@ -186,14 +169,10 @@ var DB = {
       localStorage.setItem('eng:'+k, JSON.stringify(v));
     }catch(e){ return null; }
   },
-  members: async function(){
-    if(!sb) return DB._ls('members') || [];
-    var r = await sb.from('eng_member').select('phone4,name,color').order('created_at');
-    if(r.error) throw r.error; return r.data;
-  },
-  addMember: async function(m){
-    if(!sb){ var a = DB._ls('members') || []; a.push(m); DB._ls('members', a); return; }
-    var r = await sb.from('eng_member').insert(m); if(r.error) throw r.error;
+  ensureMember: async function(m){
+    if(!sb) return;
+    var r = await sb.from('eng_member').upsert(m, {onConflict:'phone4', ignoreDuplicates:true});
+    if(r.error) throw r.error;
   },
   checks: async function(from, to){
     if(!sb) return (DB._ls('checks') || []).filter(function(c){ return c.day >= from && c.day <= to; });
@@ -224,7 +203,7 @@ var DB = {
 };
 
 /* ── 상태 ── */
-var S = { me:null, members:[], checks:{}, videos:{}, view:null, sel:null, pendingPhone:null, joinColor:null };
+var S = { me:null, members:PEOPLE, checks:{}, videos:{}, view:null, sel:null };
 
 /* ── 날짜 (기기 현지 시각 기준) ── */
 function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -235,7 +214,7 @@ function label(s){ var d = parse(s); return (d.getMonth()+1)+'월 '+d.getDate()+
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function $(id){ return document.getElementById(id); }
-function show(id){ ['v-login','v-join','v-main'].forEach(function(v){ $(v).classList.toggle('hidden', v !== id); }); }
+function show(id){ ['v-login','v-main'].forEach(function(v){ $(v).classList.toggle('hidden', v !== id); }); }
 var _tt; function toast(t){ var e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(_tt); _tt = setTimeout(function(){ e.classList.remove('show'); }, 1800); }
 
 /* ── 완료 판정 ── */
@@ -264,58 +243,25 @@ async function loadAll(){
   if(back < from) from = back;
   var to = addDays(ymd(new Date(S.view.y, S.view.m+1, 0)), 7);
   if(to < t) to = t;
-  var res = await Promise.all([DB.members(), DB.checks(from, to), DB.videos(from, to)]);
-  S.members = res[0];
+  var res = await Promise.all([DB.checks(from, to), DB.videos(from, to)]);
   S.checks = {};
-  res[1].forEach(function(c){ (S.checks[c.day] = S.checks[c.day] || {})[c.phone4] = {speak:!!c.speak, video:!!c.video}; });
+  res[0].forEach(function(c){ (S.checks[c.day] = S.checks[c.day] || {})[c.phone4] = {speak:!!c.speak, video:!!c.video}; });
   S.videos = {};
-  res[2].forEach(function(v){ S.videos[v.day] = v; });
+  res[1].forEach(function(v){ S.videos[v.day] = v; });
 }
 
-/* ── 로그인 ── */
-function wirePin(){
-  var ins = [].slice.call($('pin').querySelectorAll('input'));
-  ins.forEach(function(inp, i){
-    inp.addEventListener('input', function(){
-      inp.value = inp.value.replace(/\D/g, '').slice(-1);
-      if(inp.value && i < 3) ins[i+1].focus();
-      var v = ins.map(function(x){ return x.value; }).join('');
-      if(v.length === 4) tryLogin(v);
-    });
-    inp.addEventListener('keydown', function(e){
-      if(e.key === 'Backspace' && !inp.value && i > 0){ ins[i-1].focus(); ins[i-1].value = ''; }
-    });
-  });
-}
-function resetPin(){ $('pin').querySelectorAll('input').forEach(function(x){ x.value = ''; }); }
-async function tryLogin(p){
-  $('login-err').textContent = '';
-  try{ S.members = await DB.members(); }
-  catch(e){ $('login-err').textContent = '연결이 안 돼요. 잠시 뒤 다시 해 주세요.'; resetPin(); return; }
-  var m = S.members.find(function(x){ return x.phone4 === p; });
-  if(m){ enter(m); return; }
-  S.pendingPhone = p;
-  var used = S.members.map(function(x){ return x.color; });
-  S.joinColor = COLORS.find(function(c){ return used.indexOf(c) < 0; }) || COLORS[0];
-  renderColors(); $('join-name').value = ''; $('join-err').textContent = '';
-  show('v-join'); $('join-name').focus();
-}
-function renderColors(){
-  var used = S.members.map(function(x){ return x.color; });
-  $('join-colors').innerHTML = COLORS.map(function(c){
-    var taken = used.indexOf(c) >= 0;
-    return '<button class="sw'+(c === S.joinColor ? ' on' : '')+'" style="background:'+c+(taken ? ';opacity:.25' : '')+'"'
-      +(taken ? ' disabled title="다른 사람이 쓰는 색"' : '')+' data-c="'+c+'" aria-label="색 '+c+'"></button>';
+/* ── 캐릭터 고르기 ── */
+function renderWho(){
+  $('who').innerHTML = PEOPLE.map(function(m){
+    return '<button data-who="'+m.phone4+'"><span class="av" style="background:'+m.color+'">'+esc(m.name[0])+'</span>'+esc(m.name)+'</button>';
   }).join('');
 }
-async function join(){
-  var name = $('join-name').value.trim();
-  if(!name){ $('join-err').textContent = '이름을 적어 주세요.'; return; }
-  var m = {phone4:S.pendingPhone, name:name, color:S.joinColor};
-  $('join-go').disabled = true;
-  try{ await DB.addMember(m); enter(m); }
-  catch(e){ $('join-err').textContent = '저장이 안 됐어요. 다시 눌러 주세요.'; }
-  $('join-go').disabled = false;
+async function pick(id){
+  var m = PEOPLE.find(function(x){ return x.phone4 === id; });
+  $('login-err').textContent = '';
+  try{ await DB.ensureMember(m); }
+  catch(e){ $('login-err').textContent = '연결이 안 돼요. 잠시 뒤 다시 눌러 주세요.'; return; }
+  enter(m);
 }
 async function enter(m){
   S.me = m;
@@ -326,15 +272,12 @@ async function enter(m){
 }
 function logout(){
   try{ localStorage.removeItem('eng:me'); }catch(e){}
-  S.me = null; resetPin(); show('v-login');
-  $('pin').querySelector('input').focus();
+  S.me = null; renderWho(); show('v-login');
 }
 
 /* ── 렌더 ── */
 async function refresh(){
   try{ await loadAll(); }catch(e){ toast('불러오기 실패 — 새로고침 해 주세요'); }
-  var me = S.members.find(function(x){ return x.phone4 === S.me.phone4; });
-  if(me) S.me = me;
   render();
 }
 function render(){
@@ -482,34 +425,24 @@ document.addEventListener('click', function(e){
   var t = e.target.closest('button'); if(!t || t.disabled) return;
   if(t.dataset.d){ S.sel = t.dataset.d; S.editVideo = false; renderCal(); renderDay(); renderVideo(); return; }
   if(t.dataset.t){ toggle(t.dataset.t); return; }
-  if(t.dataset.c){ S.joinColor = t.dataset.c; renderColors(); return; }
+  if(t.dataset.who){ pick(t.dataset.who); return; }
   switch(t.id){
     case 'prev': S.view.m--; if(S.view.m < 0){ S.view.m = 11; S.view.y--; } refresh(); break;
     case 'next': S.view.m++; if(S.view.m > 11){ S.view.m = 0; S.view.y++; } refresh(); break;
     case 'v-save': saveVideo(); break;
     case 'v-change': S.editVideo = true; renderVideo(); break;
     case 'v-cancel': S.editVideo = false; renderVideo(); break;
-    case 'join-go': join(); break;
-    case 'join-back': resetPin(); show('v-login'); break;
     case 'logout': logout(); break;
   }
 });
-$('join-name').addEventListener('keydown', function(e){ if(e.key === 'Enter') join(); });
 document.addEventListener('visibilitychange', function(){ if(!document.hidden && S.me) refresh(); });
 
 /* ── 시작 ── */
-(async function init(){
-  wirePin();
+(function init(){
   var saved = null; try{ saved = localStorage.getItem('eng:me'); }catch(e){}
-  if(saved){
-    try{
-      S.members = await DB.members();
-      var m = S.members.find(function(x){ return x.phone4 === saved; });
-      if(m){ enter(m); return; }
-    }catch(e){}
-  }
-  show('v-login');
-  $('pin').querySelector('input').focus();
+  var m = PEOPLE.find(function(x){ return x.phone4 === saved; });
+  if(m){ enter(m); return; }
+  renderWho(); show('v-login');
 })();
 </script>
 </body>
