@@ -806,9 +806,32 @@ document.addEventListener('click', function(e){
     case 'me': if(confirm('다른 사람으로 들어갈까요?')) logout(); break;
   }
 });
-document.addEventListener('visibilitychange', function(){ if(!document.hidden && S.me) refresh(); });
+/* 새 버전 확인: 아이폰 홈 화면 앱은 열어 둔 화면을 그대로 이어 쓰므로,
+   돌아올 때마다 서버의 index.html 과 지금 코드를 비교해 다르면 새로 불러옴 */
+var _upd = 0;
+async function checkUpdate(){
+  if(Date.now() - _upd < 30000) return; _upd = Date.now();
+  try{
+    var h = await (await fetch(location.pathname + '?u=' + Date.now(), {cache:'no-store'})).text();
+    var m = h.match(/<script>([\s\S]*?)<\/script>/), cur = document.querySelector('script:not([src])');
+    if(!m || !cur || m[1] === cur.textContent) return;
+    var last = 0; try{ last = +sessionStorage.getItem('eng:reloaded') || 0; }catch(e){}
+    if(Date.now() - last < 60000) return;   // 캐시 때문에 계속 옛 버전이면 무한 새로고침 막기
+    try{ sessionStorage.setItem('eng:reloaded', Date.now()); }catch(e){}
+    await fetch(location.pathname, {cache:'reload'}).catch(function(){});   // 브라우저 캐시도 새 버전으로
+    location.reload();
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden) return;
+  checkUpdate();
+  if(S.me) refresh();
+});
+window.addEventListener('pageshow', function(){ checkUpdate(); });
 setInterval(function(){
-  if(document.hidden || !S.me) return;
+  if(document.hidden) return;
+  checkUpdate();
+  if(!S.me) return;
   var a = document.activeElement; if(a && a.tagName === 'INPUT') return;   // 링크 입력 중엔 건드리지 않기
   refresh();
 }, 60000);
