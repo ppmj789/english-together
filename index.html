@@ -139,6 +139,28 @@ img{display:block}
 .allclear{margin-top:12px;padding:10px 12px;border-radius:14px;background:var(--accent-soft);color:#c46f25;font-size:14px;font-weight:600;
   display:flex;align-items:center;justify-content:center;gap:8px}
 .allclear img{width:24px;height:24px}
+.mini span.pass{background:#eef0ff;color:#5b63c9;font-weight:600}
+
+/* 응원·콕 */
+.cheer{font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--accent-soft);color:#c46f25;flex:none;white-space:nowrap}
+.cheer.poke{background:#eef4ff;color:#3d6fc4}
+.cheer:disabled{background:var(--soft);color:var(--dim);font-weight:500}
+.got{display:inline-block;margin-left:6px;font-size:11px;color:var(--sub);font-weight:500}
+.inbox{margin-top:14px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.inbox div{font-size:14px;display:flex;align-items:center;gap:8px}
+.inbox div img{width:20px;height:20px}
+.inbox button{align-self:flex-end;font-size:12px;color:var(--sub);margin-top:2px}
+
+/* 패스권 */
+.passbtn{display:block;width:100%;margin-top:10px;padding:10px;border-radius:14px;border:1px dashed #cfd3ee;color:#5b63c9;font-size:13px;font-weight:600;text-align:center}
+.passbtn:disabled{border-color:var(--line);color:var(--dim);font-weight:500}
+.passon{font-size:14px;color:#5b63c9;background:#eef0ff;border-radius:14px;padding:14px;text-align:center;margin-bottom:10px;font-weight:600}
+.passon small{display:block;font-weight:400;color:#7d83c9;margin-top:4px;font-size:12px}
+.todos.dim{opacity:.4;pointer-events:none}
+
+/* 카톡 공유 */
+.share{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:40px;margin-top:12px;border-radius:999px;
+  background:#fee500;color:#191919;font-size:14px;font-weight:600}
 
 /* 영상 */
 .player{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#111}
@@ -218,10 +240,12 @@ var START = '2026-11-16';
 /* 우리 셋. id 는 DB eng_member.phone4 칸에 들어가는 고정값(4자리 형식 유지)
    emoji 는 assets/emoji/ 안 파일 이름. color 는 달력 물감 색 */
 var PEOPLE = [
-  {phone4:'0001', name:'Simon', color:'#5b9cf5', emoji:'bear'},
-  {phone4:'0002', name:'MiMi',  color:'#ff7fa0', emoji:'rabbit'},
-  {phone4:'0003', name:'Jamie', color:'#ffc23d', emoji:'cat'}
+  {phone4:'0001', name:'Simon', color:'#5b9cf5', emoji:'bear',   ch:'🐻'},
+  {phone4:'0002', name:'MiMi',  color:'#ff7fa0', emoji:'rabbit', ch:'🐰'},
+  {phone4:'0003', name:'Jamie', color:'#ffc23d', emoji:'cat',    ch:'🐱'}
 ];
+var PASS_PER_WEEK = 1;   /* 사람마다 한 주(월~일)에 쓸 수 있는 패스권 수 */
+var SITE = location.origin + location.pathname;
 var WD = ['일','월','화','수','목','금','토'];
 var WD_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -245,7 +269,7 @@ var DB = {
   },
   checks: async function(from, to){
     if(!sb) return (DB._ls('checks') || []).filter(function(c){ return c.day >= from && c.day <= to; });
-    var r = await sb.from('eng_check').select('day,phone4,speak,video').gte('day', from).lte('day', to);
+    var r = await sb.from('eng_check').select('day,phone4,speak,video,pass').gte('day', from).lte('day', to);
     if(r.error) throw r.error; return r.data;
   },
   saveCheck: async function(c){
@@ -268,11 +292,26 @@ var DB = {
     }
     var r = await sb.from('eng_video').upsert(Object.assign({updated_at: new Date().toISOString()}, v), {onConflict:'day'});
     if(r.error) throw r.error;
+  },
+  cheers: async function(from, to){
+    if(!sb) return (DB._ls('cheers') || []).filter(function(c){ return c.day >= from && c.day <= to; });
+    var r = await sb.from('eng_cheer').select('day,from_phone4,to_phone4,kind,created_at').gte('day', from).lte('day', to);
+    if(r.error) throw r.error; return r.data;
+  },
+  sendCheer: async function(c){
+    if(!sb){
+      var a = DB._ls('cheers') || [];
+      if(!a.some(function(x){ return x.day === c.day && x.from_phone4 === c.from_phone4 && x.to_phone4 === c.to_phone4 && x.kind === c.kind; })) a.push(c);
+      DB._ls('cheers', a); return;
+    }
+    var r = await sb.from('eng_cheer').upsert({day:c.day, from_phone4:c.from_phone4, to_phone4:c.to_phone4, kind:c.kind},
+      {onConflict:'day,from_phone4,to_phone4,kind', ignoreDuplicates:true});
+    if(r.error) throw r.error;
   }
 };
 
 /* ── 상태 ── */
-var S = { me:null, members:PEOPLE, checks:{}, videos:{}, view:null, sel:null, bloom:null };
+var S = { me:null, members:PEOPLE, checks:{}, videos:{}, cheers:[], view:null, sel:null, bloom:null };
 
 /* ── 날짜 (기기 현지 시각 기준) ── */
 function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -302,20 +341,20 @@ function logoHtml(size){
 }
 
 /* ── 달력 타일: 칸을 세 사람 몫으로 나눠, 끝낸 사람은 자기 색 / 하나만 했으면 옅은 색 / 안 했으면 회색.
-   셋 다 끝내면 세 색이 부드럽게 섞인 그라데이션 + ✓ ── */
+   패스권 쓴 사람은 자기 색 줄무늬(완료로 침). 셋 다 끝내면 세 색이 부드럽게 섞인 그라데이션 + ✓ ── */
 var TILE_CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
 var GRAY = '#e9e9e7';
 function tileHtml(s){
-  var n = S.members.length, pop = S.bloom === s ? ' pop' : '';
+  var n = S.members.length, pop = S.bloom && S.bloom.day === s ? ' pop' : '';
   if(allDone(s)){
     return '<span class="tile full'+pop+'" style="background:linear-gradient(135deg,'
-      + S.members.map(function(m){ return m.color; }).join(',')+')">'+TILE_CHECK+'</span>';
+      + S.members.map(function(m){ return chk(s, m.phone4).pass ? m.color + 'aa' : m.color; }).join(',')+')">'+TILE_CHECK+'</span>';
   }
   var any = false, stops = [];
   S.members.forEach(function(m, i){
-    var c = chk(s, m.phone4), k = (c.speak ? 1 : 0) + (c.video ? 1 : 0);
+    var c = chk(s, m.phone4), k = c.pass ? 2 : (c.speak ? 1 : 0) + (c.video ? 1 : 0);
     if(k) any = true;
-    var col = k === 2 ? m.color : k === 1 ? m.color + '66' : GRAY;
+    var col = c.pass ? m.color + 'aa' : k === 2 ? m.color : k === 1 ? m.color + '66' : GRAY;
     var a = (i / n * 100).toFixed(1), b = ((i + 1) / n * 100).toFixed(1);
     stops.push(col+' '+a+'%', col+' '+b+'%');
   });
@@ -324,8 +363,31 @@ function tileHtml(s){
 }
 
 /* ── 완료 판정 ── */
-function chk(day, p){ return (S.checks[day] && S.checks[day][p]) || {speak:false, video:false}; }
-function personDone(day, p){ var c = chk(day, p); return c.speak && c.video; }
+function chk(day, p){ return (S.checks[day] && S.checks[day][p]) || {speak:false, video:false, pass:false}; }
+function personDone(day, p){ var c = chk(day, p); return c.pass || (c.speak && c.video); }
+
+/* 패스권: 그 주(월~일)에 이 날 말고 몇 장 썼는지 */
+function weekStart(s){ var d = parse(s); return addDays(s, -((d.getDay() + 6) % 7)); }
+function passLeft(s, p){
+  var ws = weekStart(s), n = 0;
+  for(var i = 0; i < 7; i++){ var d = addDays(ws, i); if(d !== s && chk(d, p).pass) n++; }
+  return Math.max(0, PASS_PER_WEEK - n);
+}
+
+/* 응원·콕 */
+function sentCheer(day, from, to, kind){
+  return S.cheers.some(function(c){ return c.day === day && c.from_phone4 === from && c.to_phone4 === to && c.kind === kind; });
+}
+function gotCount(day, to, kind){
+  return S.cheers.filter(function(c){ return c.day === day && c.to_phone4 === to && c.kind === kind; }).length;
+}
+function seenKey(){ return 'eng:seen:' + S.me.phone4; }
+function newCheers(){
+  var seen = ''; try{ seen = localStorage.getItem(seenKey()) || ''; }catch(e){}
+  var t = today();
+  return S.cheers.filter(function(c){ return c.day === t && c.to_phone4 === S.me.phone4 && (c.created_at || '') > seen; })
+    .sort(function(a, b){ return (a.created_at || '') < (b.created_at || '') ? -1 : 1; });
+}
 function allDone(day){ return S.members.every(function(m){ return personDone(day, m.phone4); }); }
 
 /* ── 데이터 로드 ── */
@@ -333,9 +395,10 @@ async function loadAll(){
   var from = addDays(ymd(new Date(S.view.y, S.view.m, 1)), -7);
   if(from < START) from = START;
   var to = addDays(ymd(new Date(S.view.y, S.view.m+1, 0)), 7);
-  var res = await Promise.all([DB.checks(from, to), DB.videos(from, to)]);
+  var res = await Promise.all([DB.checks(from, to), DB.videos(from, to), DB.cheers(from, to).catch(function(){ return []; })]);
   S.checks = {};
-  res[0].forEach(function(c){ (S.checks[c.day] = S.checks[c.day] || {})[c.phone4] = {speak:!!c.speak, video:!!c.video}; });
+  res[0].forEach(function(c){ (S.checks[c.day] = S.checks[c.day] || {})[c.phone4] = {speak:!!c.speak, video:!!c.video, pass:!!c.pass}; });
+  S.cheers = res[2] || [];
   S.videos = {};
   res[1].forEach(function(v){ S.videos[v.day] = v; });
 }
@@ -379,7 +442,16 @@ function renderHello(){
   var d = new Date(), t = today(), n = dayNo(t);
   $('hello').innerHTML = '<h1>Happy<br>'+WD_EN[d.getDay()]+', '+esc(S.me.name)+' '+emo('wave', '')+'</h1>'
     + '<p class="date">'+(n >= 1 ? '<span class="dayn">Day '+n+'</span>' : '<span class="dayn">D-'+(1 - n)+'</span>')
-    + d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일'+(n === 1 ? ' · 오늘 시작!' : '')+'</p>';
+    + d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일'+(n === 1 ? ' · 오늘 시작!' : '')+'</p>'
+    + inboxHtml();
+}
+function inboxHtml(){
+  var list = newCheers();
+  if(!list.length) return '';
+  return '<div class="inbox">' + list.map(function(c){
+    var m = S.members.find(function(x){ return x.phone4 === c.from_phone4; }); if(!m) return '';
+    return '<div>'+emo(m.emoji, '')+'<span><b>'+esc(m.name)+'</b> · '+(c.kind === 'poke' ? '콕 찔렀어요 👉' : '박수 보냈어요 👏')+'</span></div>';
+  }).join('') + '<button id="inbox-ok">확인 ✓</button></div>';
 }
 function renderCal(){
   var y = S.view.y, m = S.view.m, t = today();
@@ -408,21 +480,45 @@ function renderDay(){
   $('todo').innerHTML = '<div class="card-h"><h2>'+(isToday ? "Today's Todos" : label(s))+'</h2>'
     + (isToday || !on ? '<span class="link">'+label(s)+'</span>' : '<button class="link" id="go-today">오늘로 ›</button>')+'</div>'
     + (on ? '' : '<div class="note" style="margin-bottom:10px">'+START.slice(5).replace('-', '월 ').replace(/^0/, '')+'일부터 시작해요</div>')
-    + '<div class="todos">' + TASKS.map(function(t){
+    + (c.pass ? '<div class="passon">🎫 '+(isToday ? '오늘은' : '이 날은')+' 패스권을 썼어요<small>완료로 쳐 줘요 · 셋 다 연속도 안 끊겨요</small></div>' : '')
+    + '<div class="todos'+(c.pass ? ' dim' : '')+'">' + TASKS.map(function(t){
       return '<button class="todo'+(c[t.key] ? ' done' : '')+'" data-t="'+t.key+'"'+(on ? '' : ' disabled')+'>'
         + '<span class="ic">'+emo(t.ic, '')+'</span><span class="tx"><b>'+t.title+'</b><small>'+t.sub+'</small></span>'
         + '<span class="box">'+CHECK_SVG+'</span></button>';
-    }).join('') + '</div>';
+    }).join('') + '</div>' + passHtml(s, c, on);
 
   var cnt = S.members.filter(function(mm){ return personDone(s, mm.phone4); }).length;
   $('crew').innerHTML = '<div class="card-h"><h2>Crew</h2><span class="link">'+cnt+' / '+S.members.length+' 완료</span></div>'
     + S.members.map(function(mm){
-      var cc = chk(s, mm.phone4), k = (cc.speak ? 1 : 0) + (cc.video ? 1 : 0);
+      var cc = chk(s, mm.phone4), k = (cc.speak ? 1 : 0) + (cc.video ? 1 : 0), mine = mm.phone4 === S.me.phone4;
+      var st = cc.pass ? '패스 🎫' : (k === 2 ? '오늘 끝!' : k + ' / 2');
+      var g = gotCount(s, mm.phone4, 'cheer'), pk = gotCount(s, mm.phone4, 'poke');
+      var got = (g ? '<span class="got">👏'+g+'</span>' : '') + (pk && !personDone(s, mm.phone4) ? '<span class="got">👉'+pk+'</span>' : '');
       return '<div class="crew-row">'+av(mm)
-        + '<div class="nm">'+esc(mm.name)+(mm.phone4 === S.me.phone4 ? ' <small>나</small>' : '<small>'+(k === 2 ? '오늘 끝!' : k + ' / 2')+'</small>')+'</div>'
-        + '<div class="mini"><span class="'+(cc.speak ? 'on' : '')+'">Speak</span><span class="'+(cc.video ? 'on' : '')+'">Video</span></div></div>';
+        + '<div class="nm">'+esc(mm.name)+got+'<small>'+(mine ? '나 · ' : '')+st+'</small></div>'
+        + (cc.pass ? '<div class="mini"><span class="pass">Pass</span></div>'
+                   : '<div class="mini"><span class="'+(cc.speak ? 'on' : '')+'">Speak</span><span class="'+(cc.video ? 'on' : '')+'">Video</span></div>')
+        + (mine ? '' : cheerBtn(s, mm))
+        + '</div>';
     }).join('')
-    + (allDone(s) ? '<div class="allclear">'+emo('party', '')+'다 같이 해냈어요!</div>' : '');
+    + (allDone(s) ? '<div class="allclear">'+emo('party', '')+'다 같이 해냈어요!</div>' : '')
+    + (on ? '<button class="share" id="share-status">💬 카톡에 현황 공유</button>' : '');
+}
+function passHtml(s, c, on){
+  if(!on) return '';
+  if(c.pass) return '<button class="passbtn" id="pass">패스 취소하기</button>';
+  if(c.speak && c.video) return '';
+  var left = passLeft(s, S.me.phone4);
+  return left ? '<button class="passbtn" id="pass">🎫 '+(s === today() ? '오늘' : '이 날')+' 패스권 쓰기 · 이번 주 '+left+'장 남음</button>'
+              : '<button class="passbtn" disabled>🎫 이번 주 패스권을 다 썼어요</button>';
+}
+/* 오늘만: 다 한 사람에겐 박수, 아직인 사람은 콕 */
+function cheerBtn(s, mm){
+  if(s !== today()) return '';
+  var kind = personDone(s, mm.phone4) ? 'cheer' : 'poke';
+  var sent = sentCheer(s, S.me.phone4, mm.phone4, kind);
+  var txt = kind === 'cheer' ? (sent ? '👏 보냄' : '👏 박수') : (sent ? '콕 보냄' : '👉 콕');
+  return '<button class="cheer'+(kind === 'poke' ? ' poke' : '')+'" data-cheer="'+mm.phone4+'" data-kind="'+kind+'"'+(sent ? ' disabled' : '')+'>'+txt+'</button>';
 }
 
 /* ── 영상 (유튜브, 자막 꺼서 시작) ── */
@@ -457,7 +553,8 @@ function renderVideo(){
       + (id ? '<div class="player"><div id="ytp"></div></div>'
             : '<a class="btn line" href="'+esc(v.url)+'" target="_blank" rel="noopener">영상 열기 ↗</a>')
       + (v.title ? '<div class="vtitle">'+esc(v.title)+'</div>' : '')
-      + '<div class="vmeta">'+(who ? esc(who.name)+' 픽 · ' : '')+'자막은 꺼진 채로 시작해요</div>';
+      + '<div class="vmeta">'+(who ? esc(who.name)+' 픽 · ' : '')+'자막은 꺼진 채로 시작해요</div>'
+      + '<button class="share" id="share-video">💬 카톡에 영상 공유</button>';
     if(id) withYT(function(){
       if(S.sel !== s || !document.getElementById('ytp')) return;
       YTP = new YT.Player('ytp', {
@@ -497,15 +594,78 @@ async function toggle(key){
   var before = allDone(s);
   var c = Object.assign({}, chk(s, p)); c[key] = !c[key];
   (S.checks[s] = S.checks[s] || {})[p] = c;
-  if(c[key]) S.bloom = s;
+  if(c[key]) S.bloom = {day:s, p:p};
   renderChecks();
-  try{ await DB.saveCheck({day:s, phone4:p, speak:c.speak, video:c.video}); }
+  try{ await DB.saveCheck({day:s, phone4:p, speak:c.speak, video:c.video, pass:!!c.pass}); }
   catch(e){
     c[key] = !c[key]; S.checks[s][p] = c; renderChecks(); toast('저장이 안 됐어요. 다시 눌러 주세요'); return;
   }
   if(!before && allDone(s)) celebrate();
   else if(personDone(s, p) && c[key]) toast('오늘 내 몫 끝! 🎉');
 }
+async function togglePass(){
+  var s = S.sel, p = S.me.phone4;
+  if(!active(s)) return;
+  var before = allDone(s), c = Object.assign({}, chk(s, p));
+  if(!c.pass && !passLeft(s, p)){ toast('이번 주 패스권을 이미 썼어요'); return; }
+  c.pass = !c.pass;
+  (S.checks[s] = S.checks[s] || {})[p] = c;
+  if(c.pass) S.bloom = {day:s, p:p};
+  renderChecks();
+  try{ await DB.saveCheck({day:s, phone4:p, speak:c.speak, video:c.video, pass:c.pass}); }
+  catch(e){ c.pass = !c.pass; S.checks[s][p] = c; renderChecks(); toast('저장이 안 됐어요. 다시 눌러 주세요'); return; }
+  if(!before && allDone(s)) celebrate();
+  else toast(c.pass ? '패스권 사용! 내일 다시 달려요 🎫' : '패스를 취소했어요');
+}
+async function cheer(to, kind){
+  var c = {day:today(), from_phone4:S.me.phone4, to_phone4:to, kind:kind, created_at:new Date().toISOString()};
+  var m = S.members.find(function(x){ return x.phone4 === to; });
+  S.cheers.push(c); renderDay();
+  try{ await DB.sendCheer(c); toast(m.name+(kind === 'poke' ? '에게 콕 👉 보냈어요' : '에게 박수 👏 보냈어요')); }
+  catch(e){ S.cheers.splice(S.cheers.indexOf(c), 1); renderDay(); toast('못 보냈어요. 다시 눌러 주세요'); }
+}
+function inboxOk(){
+  var last = newCheers().map(function(c){ return c.created_at || ''; }).sort().pop();
+  try{ if(last) localStorage.setItem(seenKey(), last); }catch(e){}
+  renderHello();
+}
+
+/* 카톡 공유: 휴대폰은 공유 시트(카카오톡 선택), PC는 복사 */
+function shareOut(text){
+  var mobile = window.matchMedia && matchMedia('(pointer:coarse)').matches;
+  if(mobile && navigator.share){ navigator.share({text:text}).catch(function(){}); return; }
+  copyText(text);
+}
+function copyText(text){
+  function done(){ toast('복사했어요 · 카톡방에 붙여넣기 해 주세요'); }
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done, fallback); }
+  else fallback();
+  function fallback(){
+    var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ toast('복사가 안 됐어요'); }
+    document.body.removeChild(ta);
+  }
+}
+function statusText(){
+  var s = S.sel, n = dayNo(s), v = S.videos[s];
+  var lines = ['[미지의 영어] Day '+n+' · '+label(s)];
+  S.members.forEach(function(m){
+    var c = chk(s, m.phone4);
+    lines.push(m.ch+' '+m.name+'  '+(c.pass ? '🎫 패스' : (c.speak ? '✅' : '⬜')+'스픽 '+(c.video ? '✅' : '⬜')+'영상'));
+  });
+  if(allDone(s)) lines.push('🎉 셋 다 해냈어요!');
+  if(v) lines.push('', '📺 '+(v.title || '오늘의 영상'));
+  lines.push('', '👉 '+SITE);
+  return lines.join('\n');
+}
+function videoText(){
+  var s = S.sel, v = S.videos[s]; if(!v) return '';
+  var who = S.members.find(function(x){ return x.phone4 === v.by_phone4; });
+  return ['[미지의 영어] '+(s === today() ? '오늘의 영상' : label(s)+' 영상')+' 🎬'+(who ? ' ('+who.name+' 픽)' : ''),
+          v.title || '', v.url, '', '자막 없이 보고 체크하기 👉 '+SITE].filter(function(x, i){ return i !== 1 || x; }).join('\n');
+}
+
 function celebrate(){
   var b = $('burst'), em = ['🎉','✨','🧡','⭐','💙','💛'], h = '';
   for(var i = 0; i < 28; i++){
@@ -521,6 +681,7 @@ document.addEventListener('click', function(e){
   if(t.dataset.d){ S.sel = t.dataset.d; S.editVideo = false; renderCal(); renderDay(); renderVideo(); return; }
   if(t.dataset.t){ toggle(t.dataset.t); return; }
   if(t.dataset.who){ pick(t.dataset.who); return; }
+  if(t.dataset.cheer){ cheer(t.dataset.cheer, t.dataset.kind); return; }
   switch(t.id){
     case 'prev': S.view.m--; if(S.view.m < 0){ S.view.m = 11; S.view.y--; } refresh(); break;
     case 'next': S.view.m++; if(S.view.m > 11){ S.view.m = 0; S.view.y++; } refresh(); break;
@@ -531,10 +692,19 @@ document.addEventListener('click', function(e){
     case 'v-save': saveVideo(); break;
     case 'v-change': S.editVideo = true; renderVideo(); break;
     case 'v-cancel': S.editVideo = false; renderVideo(); break;
+    case 'pass': togglePass(); break;
+    case 'inbox-ok': inboxOk(); break;
+    case 'share-status': shareOut(statusText()); break;
+    case 'share-video': shareOut(videoText()); break;
     case 'me': if(confirm('다른 사람으로 들어갈까요?')) logout(); break;
   }
 });
 document.addEventListener('visibilitychange', function(){ if(!document.hidden && S.me) refresh(); });
+setInterval(function(){
+  if(document.hidden || !S.me) return;
+  var a = document.activeElement; if(a && a.tagName === 'INPUT') return;   // 링크 입력 중엔 건드리지 않기
+  refresh();
+}, 60000);
 
 /* ── 시작 ── */
 (function init(){
