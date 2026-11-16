@@ -185,7 +185,6 @@ span.rx{cursor:default}
 .st{display:flex;gap:10px;margin-top:3px;font-size:12px;color:var(--dim);font-weight:400}
 .st b{font-weight:600;color:var(--ok)}
 .st .ps{color:#5b63c9;font-weight:600}
-.pokeshare{display:flex;justify-content:flex-end;padding:0 0 10px}
 .hint{font-size:12px;color:var(--dim);margin:10px 2px 0}
 
 /* 영상 */
@@ -439,7 +438,7 @@ function seenKey(){ return 'eng:seen:' + S.me.phone4; }
 function newCheers(){
   var seen = ''; try{ seen = localStorage.getItem(seenKey()) || ''; }catch(e){}
   var t = today();
-  return S.cheers.filter(function(c){ return c.day === t && c.to_phone4 === S.me.phone4 && (c.created_at || '') > seen; })
+  return S.cheers.filter(function(c){ return c.kind !== 'poke' && c.day === t && c.to_phone4 === S.me.phone4 && (c.created_at || '') > seen; })
     .sort(function(a, b){ return (a.created_at || '') < (b.created_at || '') ? -1 : 1; });
 }
 function allDone(day){ return S.members.every(function(m){ return personDone(day, m.phone4); }); }
@@ -509,7 +508,7 @@ function inboxHtml(){
   return '<div class="inbox">' + list.map(function(c){
     var m = S.members.find(function(x){ return x.phone4 === c.from_phone4; }); if(!m) return '';
     var r = react(c.kind);
-    return '<div>'+emo(m.emoji, '')+'<span><b>'+esc(m.name)+'</b> · '+(c.kind === 'poke' ? '콕 찔렀어요 👉' : r.t+' 보냈어요 '+r.e)+'</span></div>';
+    return '<div>'+emo(m.emoji, '')+'<span><b>'+esc(m.name)+'</b> · '+r.t+' 보냈어요 '+r.e+'</span></div>';
   }).join('') + '<button id="inbox-ok">확인 ✓</button></div>';
 }
 function renderCal(){
@@ -561,17 +560,13 @@ function renderDay(){
     + (on ? '<button class="share" id="share-status">💬 현황 공유</button>' : '')+'</div>'
     + others.map(function(mm){
       var cc = chk(s, mm.phone4);
-      var pk = gotCount(s, mm.phone4, 'poke');
-      var got = pk && !personDone(s, mm.phone4) ? '<span class="got">👉'+pk+'</span>' : '';
       var vn = watchedCount(s, mm.phone4), vt = weekVids(s).length;
       var st = (cc.pass ? '<span class="ps">🎫 패스</span>' : cc.speak ? '<b>✓ 스픽</b>' : '<span>· 스픽</span>')
         + (vn >= vt && vt ? '<b>✓ 영상 '+vn+'/'+vt+'</b>' : '<span>영상 '+vn+'/'+vt+'</span>');
-      var pokeShare = s === today() && !personDone(s, mm.phone4) && sentCheer(s, S.me.phone4, mm.phone4, 'poke');
       return '<div class="crew-row">'+av(mm)
-        + '<div class="nm">'+esc(mm.name)+got+'<div class="st">'+st+'</div>'+reactsHtml(s, mm)+'</div>'
+        + '<div class="nm">'+esc(mm.name)+'<div class="st">'+st+'</div>'+reactsHtml(s, mm)+'</div>'
         + pokeBtn(s, mm)
-        + '</div>'
-        + (pokeShare ? '<div class="pokeshare"><button class="share" data-pokeshare="'+mm.phone4+'">💬 카톡으로도 보낼까요?</button></div>' : '');
+        + '</div>';
     }).join('')
     + (allDone(s) ? '<div class="allclear">'+emo('party', '')+'다 같이 해냈어요!</div>' : '');
 }
@@ -594,11 +589,10 @@ function reactsHtml(s, mm){
   }).join('');
   return h ? '<div class="reacts">'+h+'</div>' : '';
 }
-/* 오늘만: 아직 스픽 안 한 사람에게 콕 */
+/* 오늘만: 아직 스픽 안 한 사람에게 카톡 독촉 메시지 */
 function pokeBtn(s, mm){
   if(s !== today() || personDone(s, mm.phone4)) return '';
-  var sent = sentCheer(s, S.me.phone4, mm.phone4, 'poke');
-  return '<button class="cheer" data-cheer="'+mm.phone4+'" data-kind="poke"'+(sent ? ' disabled' : '')+'>'+(sent ? '콕 보냄' : '👉 콕')+'</button>';
+  return '<button class="share" data-pokeshare="'+mm.phone4+'">💬 카톡 독촉</button>';
 }
 
 /* ── 영상 (유튜브, 자막 꺼서 시작) ── */
@@ -710,7 +704,7 @@ async function cheer(to, kind){
   var m = S.members.find(function(x){ return x.phone4 === to; });
   S.cheers.push(c); renderDay();
   var r = react(kind);
-  try{ await DB.sendCheer(c); toast(m.name+(kind === 'poke' ? '에게 콕 👉 · 카톡으로도 보낼 수 있어요' : '에게 '+r.t+' '+r.e+' 보냈어요')); }
+  try{ await DB.sendCheer(c); toast(m.name+'에게 '+r.t+' '+r.e+' 보냈어요'); }
   catch(e){ S.cheers.splice(S.cheers.indexOf(c), 1); renderDay(); toast('못 보냈어요. 다시 눌러 주세요'); }
 }
 function inboxOk(){
@@ -751,7 +745,8 @@ function pokeText(to){
   var me = S.me, m = S.members.find(function(x){ return x.phone4 === to; }), c = chk(today(), to), left = [];
   var vl = weekVids(today()).length - watchedCount(today(), to);
   if(!c.speak) left.push('스픽'); if(vl > 0) left.push('이번 주 영상 '+vl+'편');
-  return [me.ch+' '+me.name+'가 '+m.ch+' '+m.name+'를 콕 👉', left.length ? '아직 '+left.join(', ')+' 남았어요!' : '', '', '👉 '+SITE]
+  return ['📣 '+m.ch+' '+m.name+', 오늘 영어 했어요? (from '+me.ch+' '+me.name+')',
+          left.length ? '아직 '+left.join(', ')+' 남았어요! 얼른 해요 🔥' : '', '', '👉 '+SITE]
     .filter(function(x, i){ return i !== 1 || x; }).join('\n');
 }
 function videoText(){
