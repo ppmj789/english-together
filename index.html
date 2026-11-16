@@ -77,12 +77,12 @@ img{display:block}
 .me .av{width:28px;height:28px;border-radius:50%}
 .me .av img{width:20px;height:20px}
 
-.dash{display:grid;gap:16px;grid-template-columns:1fr;grid-template-areas:"hello" "cal" "todo" "crew" "video"}
+.dash{display:grid;gap:16px;grid-template-columns:1fr;grid-template-areas:"hello" "cal" "todo" "week" "crew" "video"}
 @media (min-width:900px){
   .dash{grid-template-columns:320px 1fr 1fr;
-    grid-template-areas:"hello video todo" "cal video crew" "cal . crew";align-items:start}
+    grid-template-areas:"hello video todo" "cal video week" "cal . crew" ". . crew";align-items:start}
 }
-.a-hello{grid-area:hello} .a-cal{grid-area:cal} .a-todo{grid-area:todo}
+.a-hello{grid-area:hello} .a-cal{grid-area:cal} .a-todo{grid-area:todo} .a-week{grid-area:week}
 .a-crew{grid-area:crew} .a-video{grid-area:video}
 
 .hello h1{font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-.035em;margin:0}
@@ -155,7 +155,6 @@ img{display:block}
 .rx{display:inline-flex;align-items:center;gap:3px;height:28px;padding:0 10px;border-radius:999px;background:var(--soft);font-size:14px;line-height:1}
 .rx small{font-size:11px;color:var(--sub);font-weight:600}
 .rx.on{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent2)}
-.rx:disabled{cursor:default}
 span.rx{cursor:default}
 .got{display:inline-block;margin-left:6px;font-size:11px;color:var(--sub);font-weight:500}
 .inbox{margin-top:14px;background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
@@ -253,6 +252,7 @@ span.rx{cursor:default}
       </div>
 
       <div class="a-todo card" id="todo"></div>
+      <div class="a-week card" id="week"></div>
       <div class="a-crew card" id="crew"></div>
       <div class="a-video card" id="video"></div>
     </div>
@@ -340,6 +340,15 @@ var DB = {
     if(!sb) return (DB._ls('cheers') || []).filter(function(c){ return c.day >= from && c.day <= to; });
     var r = await sb.from('eng_cheer').select('day,from_phone4,to_phone4,kind,created_at').gte('day', from).lte('day', to);
     if(r.error) throw r.error; return r.data;
+  },
+  unCheer: async function(c){
+    if(!sb){
+      DB._ls('cheers', (DB._ls('cheers') || []).filter(function(x){ return !(x.day === c.day && x.from_phone4 === c.from_phone4 && x.to_phone4 === c.to_phone4 && x.kind === c.kind); }));
+      return;
+    }
+    var r = await sb.from('eng_cheer').delete().eq('day', c.day).eq('from_phone4', c.from_phone4).eq('to_phone4', c.to_phone4).eq('kind', c.kind).select('kind');
+    if(r.error) throw r.error;
+    if(!r.data || !r.data.length) throw new Error('not deleted');
   },
   sendCheer: async function(c){
     if(!sb){
@@ -540,19 +549,19 @@ function renderDay(){
     + '<div class="hbtns">'+(!isToday && on ? '<button class="link" id="go-today">오늘로 ›</button>' : '')+passHtml(s, c, on)+'</div></div>'
     + (on ? '' : '<div class="note" style="margin-bottom:10px">'+START.slice(5).replace('-', '월 ').replace(/^0/, '')+'일부터 시작해요</div>')
     + (c.pass ? '<div class="passon">🎫 '+(isToday ? '오늘은' : '이 날은')+' 패스권을 썼어요<small>스픽을 한 걸로 쳐 줘요 · 셋 다 연속도 안 끊겨요</small></div>' : '')
-    + '<div class="sec"><span>매일</span></div>'
     + '<div class="todos'+(c.pass ? ' dim' : '')+'">'
     + '<button class="todo'+(c.speak ? ' done' : '')+'" data-t="speak"'+(on ? '' : ' disabled')+'>'
     + '<span class="ic">'+emo('speak', '')+'</span><span class="tx"><b>Speak 레슨</b><small>스픽 앱 오늘 분량</small></span>'
     + '<span class="box">'+CHECK_SVG+'</span></button></div>'
-    + '<div class="sec"><span>이번 주 영상 · 자막 없이</span>'+(wn >= vids.length && vids.length ? '<b>✓ '+wn+' / '+vids.length+'</b>' : '<span>'+wn+' / '+vids.length+'</span>')+'</div>'
+    + (on && !c.speak && !c.pass ? '<p class="hint">끝낸 걸 눌러서 체크해요</p>' : '');
+  $('week').innerHTML = '<div class="card-h"><h2>이번 주 영상<small>자막 없이</small></h2>'
+    + (wn >= vids.length && vids.length ? '<span class="link" style="color:var(--ok);font-weight:600">✓ '+wn+' / '+vids.length+'</span>' : '<span class="link">'+wn+' / '+vids.length+'</span>')+'</div>'
     + '<div class="todos">' + vids.map(function(v){
       var w = watched(s, S.me.phone4, v.vid);
       return '<button class="todo'+(w ? ' done' : '')+'" data-w="'+v.vid+'"'+(on ? '' : ' disabled')+'>'
         + '<span class="ic th"><img src="'+thumb(v.vid)+'" alt="" loading="lazy"></span><span class="tx"><b>'+esc(v.title)+'</b><small>'+esc(v.by)+'</small></span>'
         + '<span class="box">'+CHECK_SVG+'</span></button>';
-    }).join('') + '</div>'
-    + (on && !c.speak && !c.pass && !wn ? '<p class="hint">끝낸 걸 눌러서 체크해요</p>' : '');
+    }).join('') + '</div>';
 
   var cnt = S.members.filter(function(mm){ return personDone(s, mm.phone4); }).length;
   var others = S.members.filter(function(mm){ return mm.phone4 !== S.me.phone4; });
@@ -584,7 +593,7 @@ function reactsHtml(s, mm){
   var h = REACTS.map(function(r){
     var n = gotCount(s, mm.phone4, r.k), mine = sentCheer(s, S.me.phone4, mm.phone4, r.k);
     if(!isToday) return n ? '<span class="rx">'+r.e+'<small>'+n+'</small></span>' : '';
-    return '<button class="rx'+(mine ? ' on' : '')+'" data-cheer="'+mm.phone4+'" data-kind="'+r.k+'" title="'+r.t+'"'+(mine ? ' disabled' : '')+'>'
+    return '<button class="rx'+(mine ? ' on' : '')+'" data-cheer="'+mm.phone4+'" data-kind="'+r.k+'" title="'+r.t+(mine ? ' 취소' : '')+'">'
       + r.e+(n ? '<small>'+n+'</small>' : '')+'</button>';
   }).join('');
   return h ? '<div class="reacts">'+h+'</div>' : '';
@@ -699,11 +708,19 @@ async function togglePass(){
   if(!before && allDone(s)) celebrate();
   else toast(c.pass ? '패스권 사용! 내일 다시 달려요 🎫' : '패스를 취소했어요');
 }
+/* 리액션: 누르면 보내고, 다시 누르면 취소 */
 async function cheer(to, kind){
-  var c = {day:today(), from_phone4:S.me.phone4, to_phone4:to, kind:kind, created_at:new Date().toISOString()};
+  var t = today(), me = S.me.phone4, r = react(kind);
   var m = S.members.find(function(x){ return x.phone4 === to; });
+  var old = S.cheers.find(function(c){ return c.day === t && c.from_phone4 === me && c.to_phone4 === to && c.kind === kind; });
+  if(old){
+    S.cheers.splice(S.cheers.indexOf(old), 1); renderDay();
+    try{ await DB.unCheer(old); }
+    catch(e){ S.cheers.push(old); renderDay(); toast('취소가 안 됐어요. 다시 눌러 주세요'); }
+    return;
+  }
+  var c = {day:t, from_phone4:me, to_phone4:to, kind:kind, created_at:new Date().toISOString()};
   S.cheers.push(c); renderDay();
-  var r = react(kind);
   try{ await DB.sendCheer(c); toast(m.name+'에게 '+r.t+' '+r.e+' 보냈어요'); }
   catch(e){ S.cheers.splice(S.cheers.indexOf(c), 1); renderDay(); toast('못 보냈어요. 다시 눌러 주세요'); }
 }
