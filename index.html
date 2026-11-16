@@ -83,28 +83,29 @@ img{display:block}
 .hello .date{color:var(--sub);font-size:14px;margin:10px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .dayn{display:inline-block;background:var(--dark);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0}
 
-/* 달력 — 물감 번짐 */
+/* 달력 — 투두메이트식 타일 */
 .cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .cal-h b{font-size:18px;font-weight:700;letter-spacing:-.02em}
 .nav{display:flex;gap:6px}
 .nav button{width:28px;height:28px;border-radius:50%;color:var(--sub);font-size:15px;display:flex;align-items:center;justify-content:center;background:var(--soft)}
 .nav button:disabled{visibility:hidden}
-.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px 2px;justify-items:center}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px 2px;justify-items:center}
 .wd{font-size:11px;color:var(--dim);padding-bottom:2px}
-.day{width:38px;height:38px;border-radius:50%;position:relative;background:#f2f2f0;display:block}
-.day svg{position:absolute;left:-7px;top:-7px;width:52px;height:52px;overflow:visible;pointer-events:none}
-.day i{position:relative;display:flex;width:100%;height:100%;align-items:center;justify-content:center;
-  font-style:normal;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums;
-  text-shadow:0 0 3px #fff,0 0 6px rgba(255,255,255,.9)}
-.day.full i{color:var(--ink);font-weight:800}
-.day.today i{color:var(--ink);font-weight:800}
-.day.today::after{content:'';position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--ink)}
-.day.sel{box-shadow:0 0 0 1.5px var(--ink)}
-.day.off{background:transparent;opacity:.35;cursor:default}
+.day{display:flex;flex-direction:column;align-items:center;gap:4px;width:40px}
+.tile{width:30px;height:30px;border-radius:10px;background:#e9e9e7;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:13px;font-weight:800;transition:background .2s}
+.tile svg{width:16px;height:16px}
+.tile.part{background:var(--accent2)}
+.tile.full{background:var(--accent)}
+.day .n{font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums;line-height:1;padding:2px 5px;border-radius:999px}
+.day.today .n{background:var(--ink);color:#fff;font-weight:700}
+.day.sel .tile{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--ink)}
+.day.off{cursor:default}
+.day.off .tile{background:#f3f3f1}
+.day.off .n{color:#cfcfcf}
 .day.out{visibility:hidden}
-.bloom{animation:bloom .9s cubic-bezier(.2,.8,.2,1)}
-@keyframes bloom{from{transform:scale(.15);opacity:0}60%{opacity:1}to{transform:scale(1)}}
-.day svg circle{transform-box:fill-box;transform-origin:center}
+.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.6)}to{transform:scale(1)}}
 .cal-foot{margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--sub)}
 .cal-foot b{color:var(--ink)}
 .legend{display:flex;gap:10px}
@@ -162,7 +163,6 @@ img{display:block}
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="paint-defs"></defs></svg>
 
 <div class="wrap">
 
@@ -302,36 +302,15 @@ function logoHtml(size){
     + '<span class="w">미지의 <em>영어</em></span>';
 }
 
-/* ── 물감 정의: 사람별 수채 그라데이션 + 번짐 필터 4종 ── */
-function paintDefs(){
-  var h = '';
-  for(var k = 0; k < 4; k++){
-    h += '<filter id="wc'+k+'" x="-40%" y="-40%" width="180%" height="180%">'
-      + '<feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="'+(k*7+3)+'" result="n"/>'
-      + '<feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>'
-      + '<feGaussianBlur in="d" stdDeviation="0.5"/></filter>';
-  }
-  PEOPLE.forEach(function(m){
-    h += '<radialGradient id="pg'+m.phone4+'"><stop offset="0" stop-color="'+m.color+'" stop-opacity=".28"/>'
-      + '<stop offset=".7" stop-color="'+m.color+'" stop-opacity=".42"/><stop offset=".93" stop-color="'+m.color+'" stop-opacity=".7"/>'
-      + '<stop offset="1" stop-color="'+m.color+'" stop-opacity=".2"/></radialGradient>';
-  });
-  $('paint-defs').innerHTML = h;
-}
-function hash(s){ var x = 0; for(var i = 0; i < s.length; i++) x = (x * 31 + s.charCodeAt(i)) | 0; return Math.abs(x); }
-/* 한 칸의 물감: 다 한 사람마다 자기 색 한 방울, 반만 했으면 작은 방울. 셋 다면 크게 섞여 칸을 덮음 */
-function paintSvg(s){
-  var full = allDone(s), hs = hash(s), rot = (hs % 360) * Math.PI / 180, out = '';
-  S.members.forEach(function(m, i){
-    var c = chk(s, m.phone4), k = (c.speak ? 1 : 0) + (c.video ? 1 : 0);
-    if(!k) return;
-    var a = rot + i * 2 * Math.PI / 3, dist = full ? 5 : 7;
-    var r = full ? 17 + (hs >> (i + 2)) % 3 : (k === 2 ? 12 : 7);
-    var cx = 26 + Math.cos(a) * dist, cy = 26 + Math.sin(a) * dist;
-    var b = S.bloom && S.bloom.day === s && S.bloom.p === m.phone4 ? ' class="bloom"' : '';
-    out += '<circle'+b+' cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+r+'" fill="url(#pg'+m.phone4+')"/>';
-  });
-  return out ? '<svg viewBox="0 0 52 52"><g filter="url(#wc'+(hs % 4)+')">'+out+'</g></svg>' : '';
+/* ── 달력 타일: 아무도 안 함 = 회색, 일부 = 연주황 + 남은 사람 수, 셋 다 = 주황 + ✓ ── */
+var TILE_CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+function tileHtml(s){
+  var done = S.members.filter(function(m){ return personDone(s, m.phone4); }).length;
+  var any = S.members.some(function(m){ var c = chk(s, m.phone4); return c.speak || c.video; });
+  var pop = S.bloom === s ? ' pop' : '';
+  if(done === S.members.length) return '<span class="tile full'+pop+'">'+TILE_CHECK+'</span>';
+  if(any) return '<span class="tile part'+pop+'">'+(S.members.length - done)+'</span>';
+  return '<span class="tile"></span>';
 }
 
 /* ── 완료 판정 ── */
@@ -404,12 +383,12 @@ function renderCal(){
     if(full) fullDays++;
     var cls = 'day' + (full ? ' full' : '') + (s === t ? ' today' : '') + (on && s === S.sel ? ' sel' : '') + (on ? '' : ' off');
     h += '<button class="'+cls+'" data-d="'+s+'"'+(on ? '' : ' disabled')+' aria-label="'+label(s)+'">'
-      + (on ? paintSvg(s) : '') + '<i>'+d+'</i></button>';
+      + (on ? tileHtml(s) : '<span class="tile"></span>') + '<span class="n">'+d+'</span></button>';
   }
   $('grid').innerHTML = h;
   S.bloom = null;
-  $('cal-foot').innerHTML = '<span>'+(fullDays ? '<b>'+fullDays+'일</b> 셋 다 칠했어요' : '셋 다 하면 세 색이 섞여 번져요')+'</span>'
-    + '<span class="legend">'+S.members.map(function(mm){ return '<span><i style="background:'+mm.color+'"></i>'+esc(mm.name)+'</span>'; }).join('')+'</span>';
+  $('cal-foot').innerHTML = '<span>'+(fullDays ? '<b>'+fullDays+'일</b> 셋 다 완료' : '셋 다 하면 주황 ✓로 채워져요')+'</span>'
+    + '<span class="legend"><span><i style="background:var(--accent2)"></i>숫자 = 남은 사람</span></span>';
   var now = new Date(), st = parse(START);
   $('next').disabled = y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth());
   $('prev').disabled = y < st.getFullYear() || (y === st.getFullYear() && m <= st.getMonth());
@@ -508,7 +487,7 @@ async function toggle(key){
   var before = allDone(s);
   var c = Object.assign({}, chk(s, p)); c[key] = !c[key];
   (S.checks[s] = S.checks[s] || {})[p] = c;
-  if(c[key]) S.bloom = {day:s, p:p};
+  if(c[key]) S.bloom = s;
   renderChecks();
   try{ await DB.saveCheck({day:s, phone4:p, speak:c.speak, video:c.video}); }
   catch(e){
@@ -549,7 +528,6 @@ document.addEventListener('visibilitychange', function(){ if(!document.hidden &&
 
 /* ── 시작 ── */
 (function init(){
-  paintDefs();
   $('logo-lg').innerHTML = logoHtml(46);
   $('logo-sm').innerHTML = logoHtml(28);
   var saved = null; try{ saved = localStorage.getItem('eng:me'); }catch(e){}
