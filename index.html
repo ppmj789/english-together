@@ -4,12 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f4f4f2">
-<title>영어 같이 하기</title>
+<title>미지의 영어</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f9bd85'/%3E%3Cstop offset='1' stop-color='%23f28c3c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M14 6h36a10 10 0 0 1 10 10v24a10 10 0 0 1-10 10H30l-12 9v-9h-4A10 10 0 0 1 4 40V16A10 10 0 0 1 14 6z' fill='url(%23g)'/%3E%3Ctext x='32' y='37' text-anchor='middle' font-family='sans-serif' font-weight='800' font-size='22' fill='white'%3EAa%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 :root{
   --bg:#f4f4f2; --card:#ffffff; --ink:#1d1d1f; --sub:#6e6e73; --dim:#a1a1a6; --line:#ececec; --soft:#f7f7f5;
-  --accent:#f5a35d; --accent2:#f9bd85; --accent-soft:#fff3e8;
+  --accent:#f5a35d; --accent2:#f9bd85; --accent-deep:#f28c3c; --accent-soft:#fff3e8;
   --ok:#7fa87a; --dark:#232323;
   --r:22px; --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.04);
 }
@@ -19,8 +20,17 @@ html,body{margin:0;background:var(--bg);color:var(--ink);
   letter-spacing:-.01em;word-break:keep-all;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
 input{font:inherit;color:inherit}
+img{display:block}
 .hidden{display:none!important}
 .wrap{max-width:1160px;margin:0 auto;padding:20px 16px 48px}
+
+/* 로고 */
+.logo{display:inline-flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.04em;color:var(--ink)}
+.logo svg{flex:none}
+.logo .w{font-size:17px}
+.logo .w em{font-style:normal;color:var(--accent-deep)}
+.logo.lg{gap:12px}
+.logo.lg .w{font-size:30px}
 
 /* 공통 카드 */
 .card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--shadow)}
@@ -30,80 +40,93 @@ input{font:inherit;color:inherit}
 .link:hover{color:var(--ink)}
 .btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:46px;border-radius:999px;
   background:linear-gradient(180deg,var(--accent2),var(--accent));color:#fff;font-weight:600;font-size:15px;
-  box-shadow:0 6px 16px rgba(245,163,93,.28)}
+  box-shadow:0 6px 16px rgba(245,163,93,.28);text-decoration:none}
 .btn.line{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
 .field{width:100%;height:46px;padding:0 16px;border:1px solid var(--line);border-radius:14px;background:var(--soft);
   font-size:15px;outline:none}
 .field:focus{border-color:var(--accent);background:#fff}
 
 /* 캐릭터 고르기 */
-.pick{min-height:88vh;max-width:400px;margin:0 auto;display:flex;flex-direction:column;justify-content:center;gap:28px}
-.pick h1{font-size:34px;line-height:1.15;font-weight:800;letter-spacing:-.03em;margin:0}
-.pick p{margin:8px 0 0;color:var(--sub);font-size:15px;line-height:1.55}
-.who{display:flex;flex-direction:column;gap:10px}
-.who button{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--card);border-radius:18px;
-  box-shadow:var(--shadow);text-align:left;transition:transform .15s}
-.who button:hover{transform:translateY(-1px)}
-.who b{font-size:17px;flex:1}
-.who .arrow{color:var(--dim);font-size:18px}
-.av{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:17px;font-weight:700;flex:none}
-.av.sm{width:34px;height:34px;border-radius:11px;font-size:14px}
+.pick{min-height:88vh;max-width:420px;margin:0 auto;display:flex;flex-direction:column;justify-content:center;gap:30px}
+.pick p{margin:12px 0 0;color:var(--sub);font-size:15px;line-height:1.55}
+.who{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.who button{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 8px 16px;background:var(--card);
+  border-radius:22px;box-shadow:var(--shadow);transition:transform .15s}
+.who button:hover{transform:translateY(-2px)}
+.who button:active{transform:scale(.97)}
+.who .pic{width:76px;height:76px;border-radius:24px;display:flex;align-items:center;justify-content:center}
+.who .pic img{width:58px;height:58px}
+.who b{font-size:16px}
 .err{color:#d9534f;font-size:14px;min-height:20px}
+
+/* 아바타(3D 이모지) */
+.av{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:none}
+.av img{width:24px;height:24px}
 
 /* 대시보드 */
 .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.brand{font-size:14px;color:var(--sub);display:flex;align-items:center;gap:8px}
-.brand b{color:var(--ink)}
 .me{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--sub);background:var(--card);
-  padding:5px 12px 5px 5px;border-radius:999px;box-shadow:var(--shadow)}
-.me .av{width:28px;height:28px;border-radius:50%;font-size:12px}
+  padding:4px 12px 4px 4px;border-radius:999px;box-shadow:var(--shadow)}
+.me .av{width:28px;height:28px;border-radius:50%}
+.me .av img{width:20px;height:20px}
 
-.dash{display:grid;gap:16px;grid-template-columns:1fr;grid-template-areas:"hello" "cal" "todo" "crew" "video" "row"}
+.dash{display:grid;gap:16px;grid-template-columns:1fr;grid-template-areas:"hello" "cal" "todo" "crew" "video"}
 @media (min-width:900px){
-  .dash{grid-template-columns:300px 1fr 1fr;
-    grid-template-areas:"hello video todo" "cal video todo" "cal row crew";align-items:start}
+  .dash{grid-template-columns:320px 1fr 1fr;
+    grid-template-areas:"hello video todo" "cal video crew" "cal . crew";align-items:start}
 }
 .a-hello{grid-area:hello} .a-cal{grid-area:cal} .a-todo{grid-area:todo}
-.a-crew{grid-area:crew} .a-video{grid-area:video} .a-row{grid-area:row}
+.a-crew{grid-area:crew} .a-video{grid-area:video}
 
 .hello h1{font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-.035em;margin:0}
-.hello .date{color:var(--sub);font-size:14px;margin:8px 0 0}
+.hello h1 img{display:inline-block;width:34px;height:34px;vertical-align:-5px;margin-left:2px}
+.hello .date{color:var(--sub);font-size:14px;margin:10px 0 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dayn{display:inline-block;background:var(--dark);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0}
 
-/* 달력 */
+/* 달력 — 물감 번짐 */
 .cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .cal-h b{font-size:18px;font-weight:700;letter-spacing:-.02em}
 .nav{display:flex;gap:6px}
-.nav button{width:28px;height:28px;border-radius:50%;color:var(--dim);font-size:15px;display:flex;align-items:center;justify-content:center}
-.nav button.next{background:var(--accent);color:#fff}
+.nav button{width:28px;height:28px;border-radius:50%;color:var(--sub);font-size:15px;display:flex;align-items:center;justify-content:center;background:var(--soft)}
 .nav button:disabled{visibility:hidden}
-.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px 4px;justify-items:center}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px 2px;justify-items:center}
 .wd{font-size:11px;color:var(--dim);padding-bottom:2px}
-.ring{width:36px;height:36px;border-radius:50%;padding:2px;display:block;position:relative}
-.ring i{display:flex;width:100%;height:100%;border-radius:50%;background:#fff;align-items:center;justify-content:center;
-  font-style:normal;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
-.ring.zero{background:var(--line)}
-.ring.full i{background:linear-gradient(180deg,var(--accent2),var(--accent));color:#fff;font-weight:700}
-.ring.today i{color:var(--ink);font-weight:800}
-.ring.sel{outline:2px solid var(--ink);outline-offset:2px}
-.ring.future{opacity:.4}
-.ring.out{visibility:hidden}
-.cal-foot{margin-top:14px;font-size:13px;color:var(--sub)}
-.cal-foot b{color:var(--ok)}
+.day{width:38px;height:38px;border-radius:50%;position:relative;background:#f2f2f0;display:block}
+.day svg{position:absolute;left:-7px;top:-7px;width:52px;height:52px;overflow:visible;pointer-events:none}
+.day i{position:relative;display:flex;width:100%;height:100%;align-items:center;justify-content:center;
+  font-style:normal;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums;
+  text-shadow:0 0 3px #fff,0 0 6px rgba(255,255,255,.9)}
+.day.full i{color:var(--ink);font-weight:800}
+.day.today i{color:var(--ink);font-weight:800}
+.day.today::after{content:'';position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--ink)}
+.day.sel{box-shadow:0 0 0 1.5px var(--ink)}
+.day.off{background:transparent;opacity:.35;cursor:default}
+.day.out{visibility:hidden}
+.bloom{animation:bloom .9s cubic-bezier(.2,.8,.2,1)}
+@keyframes bloom{from{transform:scale(.15);opacity:0}60%{opacity:1}to{transform:scale(1)}}
+.day svg circle{transform-box:fill-box;transform-origin:center}
+.cal-foot{margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--sub)}
+.cal-foot b{color:var(--ink)}
+.legend{display:flex;gap:10px}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{width:10px;height:10px;border-radius:50%;display:block}
 
 /* 할 일 */
 .todos{display:flex;flex-direction:column;gap:8px}
 .todo{display:flex;align-items:center;gap:12px;padding:10px;border-radius:16px;background:var(--card);
   border:1px solid var(--line);text-align:left;width:100%}
-.todo .ic{width:44px;height:44px;border-radius:12px;background:var(--soft);display:flex;align-items:center;justify-content:center;font-size:22px;flex:none}
+.todo .ic{width:46px;height:46px;border-radius:13px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
+.todo .ic img{width:30px;height:30px}
 .todo .tx{flex:1;min-width:0}
 .todo .tx b{display:block;font-size:15px;font-weight:600}
 .todo .tx small{display:block;color:var(--dim);font-size:12px;margin-top:3px}
 .todo.done .tx b{text-decoration:line-through;color:var(--sub)}
+.todo:disabled{cursor:default}
 .box{width:24px;height:24px;border-radius:7px;border:1.5px solid #d9d9d9;flex:none;display:flex;align-items:center;justify-content:center}
 .box svg{width:14px;height:14px;opacity:0}
 .done .box{background:var(--ok);border-color:var(--ok)}
 .done .box svg{opacity:1}
+.note{font-size:13px;color:var(--sub);background:var(--soft);border-radius:14px;padding:14px;text-align:center}
 
 /* 크루 */
 .crew-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
@@ -113,7 +136,9 @@ input{font:inherit;color:inherit}
 .mini{display:flex;gap:6px}
 .mini span{font-size:12px;padding:5px 9px;border-radius:999px;background:var(--soft);color:var(--dim)}
 .mini span.on{background:var(--accent-soft);color:#c46f25;font-weight:600}
-.allclear{margin-top:12px;padding:12px;border-radius:14px;background:var(--accent-soft);color:#c46f25;font-size:14px;font-weight:600;text-align:center}
+.allclear{margin-top:12px;padding:10px 12px;border-radius:14px;background:var(--accent-soft);color:#c46f25;font-size:14px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.allclear img{width:24px;height:24px}
 
 /* 영상 */
 .player{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#111}
@@ -121,24 +146,11 @@ input{font:inherit;color:inherit}
 .vtitle{margin:12px 0 4px;font-size:15px;font-weight:600}
 .vmeta{font-size:13px;color:var(--dim)}
 .vform{display:flex;flex-direction:column;gap:10px}
-.vempty{border-radius:16px;background:linear-gradient(160deg,#fff0de,#ffe2c4);padding:22px 18px;margin-bottom:12px}
-.vempty b{font-size:20px;letter-spacing:-.02em}
-.vempty p{margin:6px 0 0;font-size:13px;color:#8a6a4e;line-height:1.5}
-
-/* 연속 + 이번 달 */
-.row2{display:grid;grid-template-columns:120px 1fr;gap:16px}
-.streak{background:var(--dark);color:#fff;border-radius:var(--r);padding:18px 14px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;text-align:center;gap:6px}
-.streak .em{width:40px;height:40px;border-radius:50%;background:#3a3a3a;display:flex;align-items:center;justify-content:center;font-size:20px}
-.streak small{color:#b9b9b9;font-size:12px}
-.streak b{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1}
-.bars{display:flex;gap:10px;height:150px}
-.bar{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;gap:6px;min-width:0}
-.bar .tr{flex:1;width:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-height:0}
-.bar i{display:block;width:100%;border-radius:12px;background:repeating-linear-gradient(135deg,#f1f1f1 0 6px,#f7f7f7 6px 12px);min-height:10px}
-.bar.top i{background:linear-gradient(180deg,var(--accent2),var(--accent))}
-.bar span{font-size:12px;color:var(--sub)}
-.bar em{font-style:normal;font-size:12px;font-weight:700}
+.vempty{border-radius:16px;background:linear-gradient(160deg,#fff0de,#ffe2c4);padding:20px 18px;margin-bottom:12px;
+  display:flex;align-items:center;gap:14px}
+.vempty img{width:56px;height:56px;flex:none}
+.vempty b{font-size:18px;letter-spacing:-.02em}
+.vempty p{margin:4px 0 0;font-size:13px;color:#8a6a4e;line-height:1.5}
 
 /* 축하·토스트 */
 .burst{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
@@ -150,12 +162,14 @@ input{font:inherit;color:inherit}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="paint-defs"></defs></svg>
+
 <div class="wrap">
 
   <!-- 캐릭터 고르기 -->
   <section id="v-login" class="pick hidden">
     <div>
-      <h1>Let's speak<br>together 👋</h1>
+      <span class="logo lg" id="logo-lg"></span>
       <p>스픽 하고, 자막 없이 영상 하나.<br>누구로 들어갈까요?</p>
     </div>
     <div class="who" id="who"></div>
@@ -165,7 +179,7 @@ input{font:inherit;color:inherit}
   <!-- 대시보드 -->
   <section id="v-main" class="hidden">
     <div class="top">
-      <div class="brand">🗣️ <b>영어 같이 하기</b></div>
+      <span class="logo" id="logo-sm"></span>
       <button class="me" id="me" title="다른 사람으로 들어가기"></button>
     </div>
 
@@ -175,7 +189,7 @@ input{font:inherit;color:inherit}
       <div class="a-cal card">
         <div class="cal-h">
           <b id="month"></b>
-          <div class="nav"><button id="prev" aria-label="이전 달">‹</button><button id="next" class="next" aria-label="다음 달">›</button></div>
+          <div class="nav"><button id="prev" aria-label="이전 달">‹</button><button id="next" aria-label="다음 달">›</button></div>
         </div>
         <div class="grid" id="grid"></div>
         <div class="cal-foot" id="cal-foot"></div>
@@ -184,11 +198,6 @@ input{font:inherit;color:inherit}
       <div class="a-todo card" id="todo"></div>
       <div class="a-crew card" id="crew"></div>
       <div class="a-video card" id="video"></div>
-
-      <div class="a-row row2">
-        <div class="streak" id="streak"></div>
-        <div class="card" id="month-bars"></div>
-      </div>
     </div>
   </section>
 </div>
@@ -204,18 +213,22 @@ var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 var sb = null;
 try{ if(SB_URL && SB_KEY && window.supabase) sb = window.supabase.createClient(SB_URL, SB_KEY); }catch(e){ sb = null; }
 
-/* 우리 셋. id 는 DB eng_member.phone4 칸에 들어가는 고정값(4자리 형식 유지) */
+/* 스터디 시작일 — 이 날 전은 달력에서 비활성 */
+var START = '2026-11-16';
+
+/* 우리 셋. id 는 DB eng_member.phone4 칸에 들어가는 고정값(4자리 형식 유지)
+   emoji 는 assets/emoji/ 안 파일 이름. color 는 달력 물감 색 */
 var PEOPLE = [
-  {phone4:'0001', name:'Simon', color:'#6c9ef0'},
-  {phone4:'0002', name:'MiMi',  color:'#ff8fa3'},
-  {phone4:'0003', name:'Jamie', color:'#f5b94a'}
+  {phone4:'0001', name:'Simon', color:'#5b9cf5', emoji:'bear'},
+  {phone4:'0002', name:'MiMi',  color:'#ff7fa0', emoji:'rabbit'},
+  {phone4:'0003', name:'Jamie', color:'#ffc23d', emoji:'cat'}
 ];
 var WD = ['일','월','화','수','목','금','토'];
 var WD_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 var MON_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 var TASKS = [
-  {key:'speak', ic:'🗣️', title:'Speak 레슨', sub:'스픽 앱 오늘 분량'},
-  {key:'video', ic:'📺', title:'자막 없이 영상 보기', sub:'오늘의 영상 5분'}
+  {key:'speak', ic:'speak', title:'Speak 레슨', sub:'스픽 앱 오늘 분량'},
+  {key:'video', ic:'tv',    title:'자막 없이 영상 보기', sub:'오늘의 영상 5분'}
 ];
 
 /* ── 저장소: Supabase 또는 localStorage ── */
@@ -228,7 +241,7 @@ var DB = {
   },
   ensureMember: async function(m){
     if(!sb) return;
-    var r = await sb.from('eng_member').upsert(m, {onConflict:'phone4', ignoreDuplicates:true});
+    var r = await sb.from('eng_member').upsert({phone4:m.phone4, name:m.name, color:m.color}, {onConflict:'phone4', ignoreDuplicates:true});
     if(r.error) throw r.error;
   },
   checks: async function(from, to){
@@ -260,7 +273,7 @@ var DB = {
 };
 
 /* ── 상태 ── */
-var S = { me:null, members:PEOPLE, checks:{}, videos:{}, view:null, sel:null };
+var S = { me:null, members:PEOPLE, checks:{}, videos:{}, view:null, sel:null, bloom:null };
 
 /* ── 날짜 (기기 현지 시각 기준) ── */
 function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -268,37 +281,69 @@ function parse(s){ var p = s.split('-'); return new Date(+p[0], +p[1]-1, +p[2]);
 function addDays(s, n){ var d = parse(s); d.setDate(d.getDate()+n); return ymd(d); }
 function today(){ return ymd(new Date()); }
 function label(s){ var d = parse(s); return (d.getMonth()+1)+'월 '+d.getDate()+'일 ('+WD[d.getDay()]+')'; }
+function dayNo(s){ return Math.round((parse(s) - parse(START)) / 864e5) + 1; }
+function active(s){ return s >= START && s <= today(); }
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function $(id){ return document.getElementById(id); }
 function show(id){ ['v-login','v-main'].forEach(function(v){ $(v).classList.toggle('hidden', v !== id); }); }
 var _tt; function toast(t){ var e = $('toast'); e.textContent = t; e.classList.add('show'); clearTimeout(_tt); _tt = setTimeout(function(){ e.classList.remove('show'); }, 1800); }
-function av(m, cls){ return '<span class="av'+(cls ? ' '+cls : '')+'" style="background:'+m.color+'">'+esc(m.name[0])+'</span>'; }
+function emo(name, alt){ return '<img src="assets/emoji/'+name+'.png" alt="'+esc(alt || '')+'" loading="lazy">'; }
+function tint(hex){ return hex + '26'; }   // 15% 정도 옅은 배경
+function av(m){ return '<span class="av" style="background:'+tint(m.color)+'">'+emo(m.emoji, m.name)+'</span>'; }
 var CHECK_SVG = '<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+
+/* ── 로고: 말풍선 + 미지의 영어 ── */
+function logoHtml(size){
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lg'+size+'" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0" stop-color="#f9bd85"/><stop offset="1" stop-color="#f28c3c"/></linearGradient></defs>'
+    + '<path d="M14 6h36a10 10 0 0 1 10 10v24a10 10 0 0 1-10 10H30l-12 9v-9h-4A10 10 0 0 1 4 40V16A10 10 0 0 1 14 6z" fill="url(#lg'+size+')"/>'
+    + '<text x="32" y="37" text-anchor="middle" font-family="Pretendard,sans-serif" font-weight="800" font-size="22" fill="#fff">Aa</text></svg>'
+    + '<span class="w">미지의 <em>영어</em></span>';
+}
+
+/* ── 물감 정의: 사람별 수채 그라데이션 + 번짐 필터 4종 ── */
+function paintDefs(){
+  var h = '';
+  for(var k = 0; k < 4; k++){
+    h += '<filter id="wc'+k+'" x="-40%" y="-40%" width="180%" height="180%">'
+      + '<feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="'+(k*7+3)+'" result="n"/>'
+      + '<feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>'
+      + '<feGaussianBlur in="d" stdDeviation="0.5"/></filter>';
+  }
+  PEOPLE.forEach(function(m){
+    h += '<radialGradient id="pg'+m.phone4+'"><stop offset="0" stop-color="'+m.color+'" stop-opacity=".28"/>'
+      + '<stop offset=".7" stop-color="'+m.color+'" stop-opacity=".42"/><stop offset=".93" stop-color="'+m.color+'" stop-opacity=".7"/>'
+      + '<stop offset="1" stop-color="'+m.color+'" stop-opacity=".2"/></radialGradient>';
+  });
+  $('paint-defs').innerHTML = h;
+}
+function hash(s){ var x = 0; for(var i = 0; i < s.length; i++) x = (x * 31 + s.charCodeAt(i)) | 0; return Math.abs(x); }
+/* 한 칸의 물감: 다 한 사람마다 자기 색 한 방울, 반만 했으면 작은 방울. 셋 다면 크게 섞여 칸을 덮음 */
+function paintSvg(s){
+  var full = allDone(s), hs = hash(s), rot = (hs % 360) * Math.PI / 180, out = '';
+  S.members.forEach(function(m, i){
+    var c = chk(s, m.phone4), k = (c.speak ? 1 : 0) + (c.video ? 1 : 0);
+    if(!k) return;
+    var a = rot + i * 2 * Math.PI / 3, dist = full ? 5 : 7;
+    var r = full ? 17 + (hs >> (i + 2)) % 3 : (k === 2 ? 12 : 7);
+    var cx = 26 + Math.cos(a) * dist, cy = 26 + Math.sin(a) * dist;
+    var b = S.bloom && S.bloom.day === s && S.bloom.p === m.phone4 ? ' class="bloom"' : '';
+    out += '<circle'+b+' cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+r+'" fill="url(#pg'+m.phone4+')"/>';
+  });
+  return out ? '<svg viewBox="0 0 52 52"><g filter="url(#wc'+(hs % 4)+')">'+out+'</g></svg>' : '';
+}
 
 /* ── 완료 판정 ── */
 function chk(day, p){ return (S.checks[day] && S.checks[day][p]) || {speak:false, video:false}; }
 function personDone(day, p){ var c = chk(day, p); return c.speak && c.video; }
 function allDone(day){ return S.members.every(function(m){ return personDone(day, m.phone4); }); }
-function dayRatio(day){   // 셋 × 2개 중 몇 개 했는지 (0~1)
-  var n = 0;
-  S.members.forEach(function(m){ var c = chk(day, m.phone4); n += (c.speak ? 1 : 0) + (c.video ? 1 : 0); });
-  return n / (S.members.length * 2);
-}
-function streak(){
-  var d = today(), n = 0;
-  if(!allDone(d)) d = addDays(d, -1);        // 오늘은 아직 진행 중일 수 있음
-  while(allDone(d)){ n++; d = addDays(d, -1); }
-  return n;
-}
 
 /* ── 데이터 로드 ── */
 async function loadAll(){
   var from = addDays(ymd(new Date(S.view.y, S.view.m, 1)), -7);
-  var t = today(), back = addDays(t, -200);
-  if(back < from) from = back;
+  if(from < START) from = START;
   var to = addDays(ymd(new Date(S.view.y, S.view.m+1, 0)), 7);
-  if(to < t) to = t;
   var res = await Promise.all([DB.checks(from, to), DB.videos(from, to)]);
   S.checks = {};
   res[0].forEach(function(c){ (S.checks[c.day] = S.checks[c.day] || {})[c.phone4] = {speak:!!c.speak, video:!!c.video}; });
@@ -309,7 +354,7 @@ async function loadAll(){
 /* ── 캐릭터 고르기 ── */
 function renderWho(){
   $('who').innerHTML = PEOPLE.map(function(m){
-    return '<button data-who="'+m.phone4+'">'+av(m)+'<b>'+esc(m.name)+'</b><span class="arrow">›</span></button>';
+    return '<button data-who="'+m.phone4+'"><span class="pic" style="background:'+tint(m.color)+'">'+emo(m.emoji, m.name)+'</span><b>'+esc(m.name)+'</b></button>';
   }).join('');
 }
 async function pick(id){
@@ -322,7 +367,8 @@ async function pick(id){
 async function enter(m){
   S.me = m;
   try{ localStorage.setItem('eng:me', m.phone4); }catch(e){}
-  var n = new Date(); S.view = {y:n.getFullYear(), m:n.getMonth()}; S.sel = today();
+  var n = new Date(); S.view = {y:n.getFullYear(), m:n.getMonth()};
+  S.sel = today() < START ? START : today();
   show('v-main');
   await refresh();
 }
@@ -338,56 +384,44 @@ async function refresh(){
 }
 function render(){
   $('me').innerHTML = av(S.me)+esc(S.me.name);
-  renderHello(); renderStats(); renderCal(); renderDay(); renderVideo();
+  renderHello(); renderCal(); renderDay(); renderVideo();
 }
 function renderHello(){
-  var d = new Date();
-  $('hello').innerHTML = '<h1>Happy<br>'+WD_EN[d.getDay()]+', '+esc(S.me.name)+' 👋</h1>'
-    + '<p class="date">'+d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 · 오늘도 둘만 하면 돼요</p>';
-}
-function renderStats(){
-  var n = streak();
-  $('streak').innerHTML = '<span class="em">'+(n ? '🔥' : '🌱')+'</span><small>셋 다 연속</small><b>'+n+'</b><small>days</small>';
-  // 이번 달 사람별 완료 일수
-  var y = S.view.y, m = S.view.m, last = new Date(y, m+1, 0).getDate(), t = today();
-  var cnt = S.members.map(function(mm){
-    var c = 0;
-    for(var d = 1; d <= last; d++){ var s = ymd(new Date(y, m, d)); if(s <= t && personDone(s, mm.phone4)) c++; }
-    return c;
-  });
-  var max = Math.max.apply(null, cnt);
-  $('month-bars').innerHTML = '<div class="card-h"><h2>'+(m+1)+'월 완료</h2><span class="link">일 수</span></div>'
-    + '<div class="bars">' + S.members.map(function(mm, i){
-      var h = max ? Math.max(10, Math.round(cnt[i] / max * 100)) : 10;
-      return '<div class="bar'+(max && cnt[i] === max ? ' top' : '')+'"><span class="tr"><em>'+cnt[i]+'</em><i style="height:'+h+'%"></i></span><span>'+esc(mm.name)+'</span></div>';
-    }).join('') + '</div>';
+  var d = new Date(), t = today(), n = dayNo(t);
+  $('hello').innerHTML = '<h1>Happy<br>'+WD_EN[d.getDay()]+', '+esc(S.me.name)+' '+emo('wave', '')+'</h1>'
+    + '<p class="date">'+(n >= 1 ? '<span class="dayn">Day '+n+'</span>' : '<span class="dayn">D-'+(1 - n)+'</span>')
+    + d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일'+(n === 1 ? ' · 오늘 시작!' : '')+'</p>';
 }
 function renderCal(){
   var y = S.view.y, m = S.view.m, t = today();
   $('month').textContent = MON_EN[m]+', '+y;
   var first = new Date(y, m, 1).getDay(), last = new Date(y, m+1, 0).getDate();
   var h = WD.map(function(w){ return '<div class="wd">'+w+'</div>'; }).join('');
-  for(var i = 0; i < first; i++) h += '<span class="ring out"></span>';
+  for(var i = 0; i < first; i++) h += '<span class="day out"></span>';
   var fullDays = 0;
   for(var d = 1; d <= last; d++){
-    var s = ymd(new Date(y, m, d)), r = s > t ? 0 : dayRatio(s), full = r === 1;
+    var s = ymd(new Date(y, m, d)), on = active(s), full = on && allDone(s);
     if(full) fullDays++;
-    var cls = 'ring' + (full ? ' full' : r === 0 ? ' zero' : '') + (s === t ? ' today' : '') + (s === S.sel ? ' sel' : '') + (s > t ? ' future' : '');
-    var st = (!full && r > 0) ? ' style="background:conic-gradient(var(--accent) '+Math.round(r*360)+'deg,var(--line) 0)"' : '';
-    h += '<button class="'+cls+'"'+st+' data-d="'+s+'"'+(s > t ? ' disabled' : '')+' aria-label="'+label(s)+'"><i>'+d+'</i></button>';
+    var cls = 'day' + (full ? ' full' : '') + (s === t ? ' today' : '') + (on && s === S.sel ? ' sel' : '') + (on ? '' : ' off');
+    h += '<button class="'+cls+'" data-d="'+s+'"'+(on ? '' : ' disabled')+' aria-label="'+label(s)+'">'
+      + (on ? paintSvg(s) : '') + '<i>'+d+'</i></button>';
   }
   $('grid').innerHTML = h;
-  $('cal-foot').innerHTML = fullDays ? '<b>'+fullDays+'일</b> 셋 다 완료했어요' : '셋 다 끝낸 날은 주황색으로 꽉 채워져요';
-  var now = new Date();
+  S.bloom = null;
+  $('cal-foot').innerHTML = '<span>'+(fullDays ? '<b>'+fullDays+'일</b> 셋 다 칠했어요' : '셋 다 하면 세 색이 섞여 번져요')+'</span>'
+    + '<span class="legend">'+S.members.map(function(mm){ return '<span><i style="background:'+mm.color+'"></i>'+esc(mm.name)+'</span>'; }).join('')+'</span>';
+  var now = new Date(), st = parse(START);
   $('next').disabled = y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth());
+  $('prev').disabled = y < st.getFullYear() || (y === st.getFullYear() && m <= st.getMonth());
 }
 function renderDay(){
-  var s = S.sel, isToday = s === today(), c = chk(s, S.me.phone4);
+  var s = S.sel, isToday = s === today(), c = chk(s, S.me.phone4), on = active(s);
   $('todo').innerHTML = '<div class="card-h"><h2>'+(isToday ? "Today's Todos" : label(s))+'</h2>'
-    + (isToday ? '<span class="link">'+label(s)+'</span>' : '<button class="link" id="go-today">오늘로 ›</button>')+'</div>'
+    + (isToday || !on ? '<span class="link">'+label(s)+'</span>' : '<button class="link" id="go-today">오늘로 ›</button>')+'</div>'
+    + (on ? '' : '<div class="note" style="margin-bottom:10px">'+START.slice(5).replace('-', '월 ').replace(/^0/, '')+'일부터 시작해요</div>')
     + '<div class="todos">' + TASKS.map(function(t){
-      return '<button class="todo'+(c[t.key] ? ' done' : '')+'" data-t="'+t.key+'">'
-        + '<span class="ic">'+t.ic+'</span><span class="tx"><b>'+t.title+'</b><small>'+t.sub+'</small></span>'
+      return '<button class="todo'+(c[t.key] ? ' done' : '')+'" data-t="'+t.key+'"'+(on ? '' : ' disabled')+'>'
+        + '<span class="ic">'+emo(t.ic, '')+'</span><span class="tx"><b>'+t.title+'</b><small>'+t.sub+'</small></span>'
         + '<span class="box">'+CHECK_SVG+'</span></button>';
     }).join('') + '</div>';
 
@@ -395,11 +429,11 @@ function renderDay(){
   $('crew').innerHTML = '<div class="card-h"><h2>Crew</h2><span class="link">'+cnt+' / '+S.members.length+' 완료</span></div>'
     + S.members.map(function(mm){
       var cc = chk(s, mm.phone4), k = (cc.speak ? 1 : 0) + (cc.video ? 1 : 0);
-      return '<div class="crew-row">'+av(mm, 'sm')
-        + '<div class="nm">'+esc(mm.name)+(mm.phone4 === S.me.phone4 ? ' <small>나</small>' : '<small>'+(k === 2 ? '오늘 끝 🎉' : k + ' / 2')+'</small>')+'</div>'
+      return '<div class="crew-row">'+av(mm)
+        + '<div class="nm">'+esc(mm.name)+(mm.phone4 === S.me.phone4 ? ' <small>나</small>' : '<small>'+(k === 2 ? '오늘 끝!' : k + ' / 2')+'</small>')+'</div>'
         + '<div class="mini"><span class="'+(cc.speak ? 'on' : '')+'">Speak</span><span class="'+(cc.video ? 'on' : '')+'">Video</span></div></div>';
     }).join('')
-    + (allDone(s) ? '<div class="allclear">🎉 다 같이 해냈어요!</div>' : '');
+    + (allDone(s) ? '<div class="allclear">'+emo('party', '')+'다 같이 해냈어요!</div>' : '');
 }
 
 /* ── 영상 (유튜브, 자막 꺼서 시작) ── */
@@ -449,7 +483,7 @@ function renderVideo(){
     return;
   }
   el.innerHTML = head
-    + (v ? '' : '<div class="vempty"><b>아직 영상이 없어요 🎬</b><p>5분 안팎 유튜브 하나를 골라 셋이 같이 봐요.<br>먼저 고르는 사람이 임자!</p></div>')
+    + (v ? '' : '<div class="vempty">'+emo('clapper', '')+'<div><b>아직 영상이 없어요</b><p>5분 안팎 유튜브 하나를 골라 셋이 같이 봐요. 먼저 고르는 사람이 임자!</p></div></div>')
     + '<div class="vform">'
     + '<input class="field" id="v-url" placeholder="유튜브 링크 붙여넣기" value="'+esc(v ? v.url : '')+'">'
     + '<input class="field" id="v-title" maxlength="200" placeholder="제목 (선택)" value="'+esc(v ? v.title : '')+'">'
@@ -467,12 +501,14 @@ async function saveVideo(){
 }
 
 /* ── 체크 ── */
-function renderChecks(){ renderStats(); renderCal(); renderDay(); }
+function renderChecks(){ renderCal(); renderDay(); }
 async function toggle(key){
   var s = S.sel, p = S.me.phone4;
+  if(!active(s)) return;
   var before = allDone(s);
   var c = Object.assign({}, chk(s, p)); c[key] = !c[key];
   (S.checks[s] = S.checks[s] || {})[p] = c;
+  if(c[key]) S.bloom = {day:s, p:p};
   renderChecks();
   try{ await DB.saveCheck({day:s, phone4:p, speak:c.speak, video:c.video}); }
   catch(e){
@@ -482,7 +518,7 @@ async function toggle(key){
   else if(personDone(s, p) && c[key]) toast('오늘 내 몫 끝! 🎉');
 }
 function celebrate(){
-  var b = $('burst'), em = ['🎉','✨','🧡','⭐','🔥'], h = '';
+  var b = $('burst'), em = ['🎉','✨','🧡','⭐','💙','💛'], h = '';
   for(var i = 0; i < 28; i++){
     h += '<i style="left:'+(Math.random()*100)+'%;animation-delay:'+(Math.random()*.6)+'s">'+em[i % em.length]+'</i>';
   }
@@ -513,6 +549,9 @@ document.addEventListener('visibilitychange', function(){ if(!document.hidden &&
 
 /* ── 시작 ── */
 (function init(){
+  paintDefs();
+  $('logo-lg').innerHTML = logoHtml(46);
+  $('logo-sm').innerHTML = logoHtml(28);
   var saved = null; try{ saved = localStorage.getItem('eng:me'); }catch(e){}
   var m = PEOPLE.find(function(x){ return x.phone4 === saved; });
   if(m){ enter(m); return; }
