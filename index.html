@@ -77,12 +77,12 @@ img{display:block}
 .me .av{width:28px;height:28px;border-radius:50%}
 .me .av img{width:20px;height:20px}
 
-.dash{display:grid;gap:16px;grid-template-columns:1fr;grid-template-areas:"hello" "cal" "todo" "week" "crew" "video"}
+.dash{display:grid;gap:16px;grid-template-columns:1fr;grid-template-areas:"hello" "cal" "todo" "crew" "video"}
 @media (min-width:900px){
   .dash{grid-template-columns:320px 1fr 1fr;
-    grid-template-areas:"hello video todo" "cal video week" "cal . crew" ". . crew";align-items:start}
+    grid-template-areas:"hello video todo" "cal video crew" ". video .";align-items:start}
 }
-.a-hello{grid-area:hello} .a-cal{grid-area:cal} .a-todo{grid-area:todo} .a-week{grid-area:week}
+.a-hello{grid-area:hello} .a-cal{grid-area:cal} .a-todo{grid-area:todo}
 .a-crew{grid-area:crew} .a-video{grid-area:video}
 
 .hello h1{font-size:32px;line-height:1.12;font-weight:800;letter-spacing:-.035em;margin:0}
@@ -192,14 +192,26 @@ span.rx{cursor:default}
 .vtitle{margin:12px 0 4px;font-size:15px;font-weight:600}
 .vmeta{font-size:13px;color:var(--dim)}
 .vform{display:flex;flex-direction:column;gap:10px}
-.vtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.vtab{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#ddd}
-.vtab img{width:100%;height:100%;object-fit:cover;opacity:.55;transition:opacity .15s}
-.vtab.cur{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent)}
-.vtab.cur img{opacity:1}
-.vtab .no{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:2px 7px}
-.vtab .ck{position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center}
-.vtab .ck svg{width:12px;height:12px}
+.shelf{margin-top:22px}
+.shelf-h{display:flex;align-items:baseline;gap:6px;margin-bottom:10px}
+.shelf-h b{font-size:16px;font-weight:700;letter-spacing:-.02em}
+.shelf-h small{font-size:12px;color:var(--dim)}
+.shelf-h .st2{margin-left:auto;font-size:12px;color:var(--sub);font-weight:600}
+.shelf-h .st2.all{color:var(--ok)}
+.shelf-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.vcard{display:flex;flex-direction:column;align-items:stretch;text-align:left;min-width:0}
+.vthumb{position:relative;display:block;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#ddd}
+.vthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vcard.cur .vthumb{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--accent)}
+.vthumb .no{position:absolute;left:5px;top:5px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 7px}
+.vthumb .ck{position:absolute;right:5px;top:5px;width:20px;height:20px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center}
+.vthumb .ck svg{width:12px;height:12px}
+.vcard .vt{margin-top:7px;font-size:13px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vcard .by{font-size:11px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vcard .who{display:flex;flex-direction:column;gap:2px;margin-top:6px;font-size:11px;color:var(--sub);font-variant-numeric:tabular-nums}
+.vcard .who span{display:flex;align-items:center;gap:3px}
+.vcard .who img{width:14px;height:14px}
+.vcard .who .none{color:#cfcfcf}
 .vrow{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
 .wbtn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 12px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--sub)}
 .wbtn.on{background:var(--ok);border-color:var(--ok);color:#fff}
@@ -252,7 +264,6 @@ span.rx{cursor:default}
       </div>
 
       <div class="a-todo card" id="todo"></div>
-      <div class="a-week card" id="week"></div>
       <div class="a-crew card" id="crew"></div>
       <div class="a-video card" id="video"></div>
     </div>
@@ -329,13 +340,13 @@ var DB = {
   },
   watches: async function(from, to){
     if(!sb) return (DB._ls('watches') || []).filter(function(w){ return w.week >= from && w.week <= to; });
-    var r = await sb.from('eng_watch').select('week,phone4,vid').gte('week', from).lte('week', to);
+    var r = await sb.from('eng_watch').select('week,phone4,vid,created_at').gte('week', from).lte('week', to);
     if(r.error) throw r.error; return r.data;
   },
   setWatch: async function(w, on){
     if(!sb){
       var a = (DB._ls('watches') || []).filter(function(x){ return !(x.week === w.week && x.phone4 === w.phone4 && x.vid === w.vid); });
-      if(on) a.push(w); DB._ls('watches', a); return;
+      if(on) a.push(Object.assign({created_at:new Date().toISOString()}, w)); DB._ls('watches', a); return;
     }
     var r = on ? await sb.from('eng_watch').upsert(w, {onConflict:'week,phone4,vid', ignoreDuplicates:true})
                : await sb.from('eng_watch').delete().eq('week', w.week).eq('phone4', w.phone4).eq('vid', w.vid);
@@ -431,6 +442,16 @@ function weekVids(s){
 }
 function watched(s, p, vid){ var a = S.watch[weekStart(s)+'|'+p]; return !!a && a.indexOf(vid) >= 0; }
 function watchedCount(s, p){ return weekVids(s).filter(function(v){ return watched(s, p, v.vid); }).length; }
+/* 영상 체크한 날(체크 시각 기준) · 그날 본 영상 수 */
+function watchedOn(s, p, vid){ return (S.watchAt || {})[weekStart(s)+'|'+p+'|'+vid] || null; }
+function md(s){ var d = parse(s); return (d.getMonth()+1)+'/'+d.getDate(); }
+/* 고른 날이 속한 주 이름: 이번 주 · 지난 주 · 11/9~15 */
+function weekName(s){
+  var ws = weekStart(s), cur = weekStart(today());
+  if(ws === cur) return '이번 주';
+  if(ws === addDays(cur, -7)) return '지난 주';
+  return md(ws)+'~'+parse(addDays(ws, 6)).getDate();
+}
 function thumb(vid){ return 'https://i.ytimg.com/vi/'+vid+'/mqdefault.jpg'; }
 
 /* 패스권: 그 주(월~일)에 이 날 말고 몇 장 썼는지 */
@@ -462,12 +483,15 @@ async function loadAll(){
   var from = addDays(ymd(new Date(S.view.y, S.view.m, 1)), -7);
   if(from < START) from = START;
   var to = addDays(ymd(new Date(S.view.y, S.view.m+1, 0)), 7);
-  var res = await Promise.all([DB.checks(from, to), DB.watches(weekStart(from), to), DB.cheers(from, to).catch(function(){ return []; })]);
+  var res = await Promise.all([DB.checks(from, to), DB.watches(weekStart(START), addDays(today(), 7)), DB.cheers(from, to).catch(function(){ return []; })]);
   S.checks = {};
   res[0].forEach(function(c){ (S.checks[c.day] = S.checks[c.day] || {})[c.phone4] = {speak:!!c.speak, video:!!c.video, pass:!!c.pass}; });
   S.cheers = res[2] || [];
-  S.watch = {};
-  res[1].forEach(function(w){ var k = w.week+'|'+w.phone4; (S.watch[k] = S.watch[k] || []).push(w.vid); });
+  S.watch = {}; S.watchAt = {};
+  res[1].forEach(function(w){
+    var k = w.week+'|'+w.phone4; (S.watch[k] = S.watch[k] || []).push(w.vid);
+    if(w.created_at) S.watchAt[k+'|'+w.vid] = ymd(new Date(w.created_at));
+  });
 }
 
 /* ── 캐릭터 고르기 ── */
@@ -549,7 +573,6 @@ function renderCal(){
 }
 function renderDay(){
   var s = S.sel, isToday = s === today(), c = chk(s, S.me.phone4), on = active(s);
-  var vids = weekVids(s), wn = watchedCount(s, S.me.phone4);
   $('todo').innerHTML = '<div class="card-h"><h2>'+(isToday ? 'My Todos<small>'+label(s)+'</small>' : label(s))+'</h2>'
     + '<div class="hbtns">'+(!isToday && on ? '<button class="link" id="go-today">오늘로 ›</button>' : '')+passHtml(s, c, on)+'</div></div>'
     + (on ? '' : '<div class="note" style="margin-bottom:10px">'+START.slice(5).replace('-', '월 ').replace(/^0/, '')+'일부터 시작해요</div>')
@@ -559,24 +582,13 @@ function renderDay(){
     + '<span class="ic">'+emo('speak', '')+'</span><span class="tx"><b>Speak 레슨</b><small>스픽 앱 오늘 분량</small></span>'
     + '<span class="box">'+CHECK_SVG+'</span></button></div>'
     + (on && !c.speak && !c.pass ? '<p class="hint">끝낸 걸 눌러서 체크해요</p>' : '');
-  $('week').innerHTML = '<div class="card-h"><h2>이번 주 영상<small>자막 없이</small></h2>'
-    + (wn >= vids.length && vids.length ? '<span class="link" style="color:var(--ok);font-weight:600">✓ '+wn+' / '+vids.length+'</span>' : '<span class="link">'+wn+' / '+vids.length+'</span>')+'</div>'
-    + '<div class="todos">' + vids.map(function(v){
-      var w = watched(s, S.me.phone4, v.vid);
-      return '<button class="todo'+(w ? ' done' : '')+'" data-w="'+v.vid+'"'+(on ? '' : ' disabled')+'>'
-        + '<span class="ic th"><img src="'+thumb(v.vid)+'" alt="" loading="lazy"></span><span class="tx"><b>'+esc(v.title)+'</b><small>'+esc(v.by)+'</small></span>'
-        + '<span class="box">'+CHECK_SVG+'</span></button>';
-    }).join('') + '</div>';
-
   var cnt = S.members.filter(function(mm){ return personDone(s, mm.phone4); }).length;
   var others = S.members.filter(function(mm){ return mm.phone4 !== S.me.phone4; });
   $('crew').innerHTML = '<div class="card-h"><h2>Crew<small>'+cnt+' / '+S.members.length+' 완료</small></h2>'
     + (on ? '<button class="share" id="share-status">💬 현황 공유</button>' : '')+'</div>'
     + others.map(function(mm){
       var cc = chk(s, mm.phone4);
-      var vn = watchedCount(s, mm.phone4), vt = weekVids(s).length;
-      var st = (cc.pass ? '<span class="ps">🎫 패스</span>' : cc.speak ? '<b>✓ 스픽</b>' : '<span>· 스픽</span>')
-        + (vn >= vt && vt ? '<b>✓ 영상 '+vn+'/'+vt+'</b>' : '<span>영상 '+vn+'/'+vt+'</span>');
+      var st = cc.pass ? '<span class="ps">🎫 패스</span>' : cc.speak ? '<b>✓ 스픽</b>' : '<span>· 스픽</span>';
       return '<div class="crew-row">'+av(mm)
         + '<div class="nm">'+esc(mm.name)+'<div class="st">'+st+'</div>'+reactsHtml(s, mm)+'</div>'
         + pokeBtn(s, mm)
@@ -626,60 +638,90 @@ function withYT(f){
   }
 }
 function captionsOff(p){ try{ p.unloadModule('captions'); p.unloadModule('cc'); }catch(e){} }
-/* 이번 주 영상 3편: 위 썸네일로 고르고, 플레이어는 같은 영상이면 그대로 둠(보는 중 끊기지 않게) */
+/* 영상: 플레이어 + 주별 선반(이번 주 → 지난 주 → …). 칸마다 누가 언제 봤는지.
+   플레이어는 같은 영상이면 그대로 둠(보는 중 끊기지 않게) */
+function videoWeeks(){
+  var out = [], first = weekStart(START);
+  for(var ws = weekStart(today()); ws >= first; ws = addDays(ws, -7)){
+    var l = weekVids(ws); if(l.length) out.push({ws:ws, list:l});
+  }
+  return out;
+}
+function shelfHtml(w, cur){
+  var ws = w.ws, list = w.list, me = S.me.phone4, nm = weekName(ws);
+  var range = md(ws)+'~'+parse(addDays(ws, 6)).getDate();
+  var allN = S.members.filter(function(mm){ return watchedCount(ws, mm.phone4) >= list.length; }).length;
+  var myN = watchedCount(ws, me);
+  var st = allN === S.members.length ? '<span class="st2 all">셋 다 ✓</span>' : '<span class="st2">나 '+myN+' / '+list.length+'</span>';
+  return '<div class="shelf"><div class="shelf-h"><b>'+nm+'</b>'+(nm === range ? '' : '<small>'+range+'</small>')+st+'</div>'
+    + '<div class="shelf-row">' + list.map(function(v, i){
+      var who = S.members.map(function(mm){
+        var d = watchedOn(ws, mm.phone4, v.vid);
+        return d ? '<span>'+emo(mm.emoji, mm.name)+md(d)+'</span>' : '';
+      }).join('');
+      return '<button class="vcard'+(cur && v.vid === cur.vid && ws === cur.ws ? ' cur' : '')+'" data-play="'+v.vid+'" data-wk="'+ws+'">'
+        + '<span class="vthumb"><img src="'+thumb(v.vid)+'" alt="" loading="lazy"><span class="no">'+(i + 1)+'</span>'
+        + (watched(ws, me, v.vid) ? '<span class="ck">'+CHECK_SVG+'</span>' : '')+'</span>'
+        + '<b class="vt">'+esc(v.title)+'</b><span class="by">'+esc(v.by)+'</span>'
+        + '<span class="who">'+(who || '<span class="none">아직 아무도</span>')+'</span></button>';
+    }).join('') + '</div></div>';
+}
 function renderVideo(){
-  var s = S.sel, p = S.me.phone4, list = weekVids(s), el = $('video');
-  if(!list.length){
+  var p = S.me.phone4, weeks = videoWeeks(), el = $('video');
+  if(!weeks.length){
     if(YTP){ try{ YTP.destroy(); }catch(e){} YTP = null; }
     S.vkey = null; el.innerHTML = '<div class="card-h"><h2>Video</h2></div><div class="note">이번 주 영상이 아직 없어요</div>'; return;
   }
-  if(!list.some(function(v){ return v.vid === S.play; })){
-    var nx = list.find(function(v){ return !watched(s, p, v.vid); });
-    S.play = (nx || list[0]).vid;
+  var w = weeks.find(function(x){ return x.ws === S.playWeek; });
+  if(!w || !w.list.some(function(v){ return v.vid === S.play; })){
+    w = weeks[0];
+    var nx = w.list.find(function(v){ return !watched(w.ws, p, v.vid); });
+    S.playWeek = w.ws; S.play = (nx || w.list[0]).vid;
   }
-  var v = list.find(function(x){ return x.vid === S.play; }), idx = list.indexOf(v);
-  if(S.vkey !== v.vid || !$('ytp-wrap')){
-    S.vkey = v.vid;
-    if(YTP){ try{ YTP.destroy(); }catch(e){} YTP = null; }
-    el.innerHTML = '<div id="v-top"></div><div class="player" id="ytp-wrap"><div id="ytp"></div></div><div id="v-bot"></div>';
-    withYT(function(){
-      if(S.vkey !== v.vid || !document.getElementById('ytp') || YTP) return;
-      YTP = new YT.Player('ytp', {
-        videoId:v.vid,
-        playerVars:{cc_load_policy:0, rel:0, playsinline:1, modestbranding:1, hl:'en'},
-        events:{
-          onReady:function(e){ captionsOff(e.target); },
-          onStateChange:function(e){ if(e.data === 1) captionsOff(e.target); }
-        }
+  var v = w.list.find(function(x){ return x.vid === S.play; }), idx = w.list.indexOf(v), key = w.ws+'|'+v.vid;
+  if(S.vkey !== key || !$('ytp-wrap')){
+    var sameVid = S.vkey && S.vkey.split('|')[1] === v.vid && $('ytp-wrap');
+    S.vkey = key;
+    if(!sameVid){
+      if(YTP){ try{ YTP.destroy(); }catch(e){} YTP = null; }
+      el.innerHTML = '<div id="v-top"></div><div class="player" id="ytp-wrap"><div id="ytp"></div></div><div id="v-bot"></div><div id="v-shelf"></div>';
+      withYT(function(){
+        if(S.vkey.split('|')[1] !== v.vid || !document.getElementById('ytp') || YTP) return;
+        YTP = new YT.Player('ytp', {
+          videoId:v.vid,
+          playerVars:{cc_load_policy:0, rel:0, playsinline:1, modestbranding:1, hl:'en'},
+          events:{
+            onReady:function(e){ captionsOff(e.target); },
+            onStateChange:function(e){ if(e.data === 1) captionsOff(e.target); }
+          }
+        });
       });
-    });
+    }
   }
-  var wn = watchedCount(s, p), on = active(s), w = watched(s, p, v.vid);
-  $('v-top').innerHTML = '<div class="card-h"><h2>Video<small>이번 주 '+wn+' / '+list.length+'</small></h2><span class="link">자막 없이 · 주 '+list.length+'편</span></div>'
-    + '<div class="vtabs">' + list.map(function(x, i){
-      return '<button class="vtab'+(x.vid === v.vid ? ' cur' : '')+'" data-play="'+x.vid+'" aria-label="'+(i + 1)+'번 영상">'
-        + '<img src="'+thumb(x.vid)+'" alt="" loading="lazy"><span class="no">'+(i + 1)+'</span>'
-        + (watched(s, p, x.vid) ? '<span class="ck">'+CHECK_SVG+'</span>' : '')+'</button>';
-    }).join('') + '</div>';
-  $('v-bot').innerHTML = '<div class="vtitle">'+(idx + 1)+'. '+esc(v.title)+'</div>'
+  var seen = watched(w.ws, p, v.vid);
+  $('v-top').innerHTML = '<div class="card-h"><h2>Video<small>자막 없이 · 주 '+w.list.length+'편</small></h2></div>';
+  $('v-bot').innerHTML = '<div class="vtitle">'+weekName(w.ws)+' '+(idx + 1)+'. '+esc(v.title)+'</div>'
     + '<div class="vmeta">'+esc(v.by)+' · 자막은 꺼진 채로 시작해요</div>'
-    + '<div class="vrow">'+(on ? '<button class="wbtn'+(w ? ' on' : '')+'" data-w="'+v.vid+'">'+(w ? '✓ 봤어요' : '다 봤으면 체크')+'</button>' : '')
+    + '<div class="vrow"><button class="wbtn'+(seen ? ' on' : '')+'" data-w="'+v.vid+'" data-wk="'+w.ws+'">'+(seen ? '✓ 봤어요' : '다 봤으면 체크')+'</button>'
     + '<button class="share" id="share-video">💬 영상 공유</button></div>';
+  $('v-shelf').innerHTML = weeks.map(function(x){ return shelfHtml(x, {ws:w.ws, vid:v.vid}); }).join('');
 }
-async function toggleWatch(vid){
-  var s = S.sel, p = S.me.phone4;
-  if(!active(s)) return;
-  var ws = weekStart(s), k = ws+'|'+p, on = !watched(s, p, vid);
+async function toggleWatch(vid, ws){
+  var p = S.me.phone4, s = ws;
+  var k = ws+'|'+p, on = !watched(s, p, vid);
   function apply(v){
     var a = (S.watch[k] || []).filter(function(x){ return x !== vid; });
-    if(v) a.push(vid); S.watch[k] = a; renderDay(); renderVideo();
+    if(v) a.push(vid); S.watch[k] = a;
+    S.watchAt = S.watchAt || {};
+    if(v) S.watchAt[k+'|'+vid] = today(); else delete S.watchAt[k+'|'+vid];
+    renderVideo();
   }
   apply(on);
   try{ await DB.setWatch({week:ws, phone4:p, vid:vid}, on); }
   catch(e){ apply(!on); toast('저장이 안 됐어요. 다시 눌러 주세요'); return; }
   if(!on) return;
   var n = watchedCount(s, p), t = weekVids(s).length;
-  toast(n >= t ? '이번 주 영상 '+t+'편 끝! 🎬🎉' : '영상 '+n+' / '+t+' 봤어요');
+  toast(n >= t ? weekName(ws)+' 영상 '+t+'편 끝! 🎬🎉' : weekName(ws)+' 영상 '+n+' / '+t+' 봤어요');
 }
 
 /* ── 체크 ── */
@@ -772,7 +814,7 @@ function pokeText(to){
     .filter(function(x, i){ return i !== 1 || x; }).join('\n');
 }
 function videoText(){
-  var list = weekVids(S.sel), lines = ['[미지의 영어] 이번 주 영상 '+list.length+'편 🎬 (자막 없이!)', ''];
+  var list = weekVids(today()), lines = ['[미지의 영어] 이번 주 영상 '+list.length+'편 🎬 (자막 없이!)', ''];
   list.forEach(function(v, i){ lines.push((i + 1)+'. '+v.title, 'https://youtu.be/'+v.vid); });
   lines.push('', '보고 체크하기 👉 '+SITE);
   return lines.join('\n');
@@ -792,8 +834,12 @@ document.addEventListener('click', function(e){
   var t = e.target.closest('button'); if(!t || t.disabled) return;
   if(t.dataset.d){ S.sel = t.dataset.d; renderCal(); renderDay(); renderVideo(); return; }
   if(t.dataset.t){ toggle(t.dataset.t); return; }
-  if(t.dataset.w){ toggleWatch(t.dataset.w); return; }
-  if(t.dataset.play){ S.play = t.dataset.play; renderVideo(); return; }
+  if(t.dataset.w){ toggleWatch(t.dataset.w, t.dataset.wk); return; }
+  if(t.dataset.play){
+    S.play = t.dataset.play; S.playWeek = t.dataset.wk; renderVideo();
+    var pw = $('ytp-wrap'); if(pw && pw.getBoundingClientRect().top < 0) pw.scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
   if(t.dataset.who){ pick(t.dataset.who); return; }
   if(t.dataset.cheer){ cheer(t.dataset.cheer, t.dataset.kind); return; }
   if(t.dataset.pokeshare){ shareOut(pokeText(t.dataset.pokeshare)); return; }
